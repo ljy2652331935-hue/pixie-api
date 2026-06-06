@@ -37,3 +37,13 @@
 - [x] 前端 Playground 支持 whisper 和 offline_profile 模式
 - [x] 前端 API 文档页展示完整人格与模式信息
 - [x] 修复 Docs 页面导入错误
+
+## Conversation Realism 整合
+- [x] 后端更新输出 schema 为 bubbles 格式（responseStyle / visibility / bubbles / suggestedPublicMessage / quickReplies / riskLevel / confidence）
+- [x] 后端注入 Conversation Realism system prompt（短气泡、反应优先、避免 AI 腔）
+- [x] 前端 Playground 渲染逐条气泡动画（使用 delayMs）
+- [x] 前端显示 typing indicator 在延迟气泡之间
+- [x] 前端 suggestedPublicMessage 显示“使用此消息”按钮
+- [x] 前端 quickReplies 渲染为可点击 chips
+- [x] 前端 interrupt 样式显示为紧急但不吓人
+- [x] 前端根据 visibility 区分渲染位置（private / public_suggestion / public_pixie）

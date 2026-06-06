@@ -2,10 +2,29 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "wouter";
-import { Sparkles, MessageCircle, Eye, ArrowLeft, Loader2, Send, Copy, Check, Code, Users } from "lucide-react";
-import { useState } from "react";
+import { Sparkles, MessageCircle, Eye, ArrowLeft, Loader2, Send, Copy, Check, Code, Users, AlertTriangle, Zap } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+
+// ─── Types ───────────────────────────────────────────────────
+
+interface BubbleItem {
+  type: "reaction" | "roast" | "advice" | "warning" | "question" | "suggested_message";
+  text: string;
+  emotion: "neutral" | "playful" | "worried" | "smug" | "serious" | "excited";
+  delayMs: number;
+}
+
+interface BubblesResponse {
+  responseStyle: "single" | "multi" | "clarify" | "interrupt";
+  visibility: "private" | "public_suggestion" | "public_pixie";
+  bubbles: BubbleItem[];
+  suggestedPublicMessage: string | null;
+  quickReplies: string[];
+  riskLevel: "low" | "medium" | "high";
+  confidence: number;
+}
 
 // ─── Persona definitions (matches server) ─────────────────────
 
@@ -48,6 +67,190 @@ function PersonaSelector({ value, onChange }: { value: PersonaId; onChange: (v: 
           ))}
         </SelectContent>
       </Select>
+    </div>
+  );
+}
+
+// ─── Bubbles Renderer (逐条气泡动画) ─────────────────────────
+
+function BubblesRenderer({ response, personaName }: { response: BubblesResponse; personaName: string }) {
+  const [visibleCount, setVisibleCount] = useState(0);
+  const [showTyping, setShowTyping] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setVisibleCount(0);
+    setShowTyping(false);
+
+    if (!response.bubbles.length) return;
+
+    // Show first bubble immediately
+    setVisibleCount(1);
+
+    let timeoutIds: ReturnType<typeof setTimeout>[] = [];
+    let cumulativeDelay = 0;
+
+    for (let i = 1; i < response.bubbles.length; i++) {
+      const delay = response.bubbles[i].delayMs || 600;
+      cumulativeDelay += delay;
+
+      // Show typing indicator before each delayed bubble
+      const typingId = setTimeout(() => {
+        setShowTyping(true);
+      }, cumulativeDelay - Math.min(delay, 400));
+      timeoutIds.push(typingId);
+
+      // Show the bubble
+      const bubbleId = setTimeout(() => {
+        setShowTyping(false);
+        setVisibleCount(i + 1);
+      }, cumulativeDelay);
+      timeoutIds.push(bubbleId);
+    }
+
+    return () => {
+      timeoutIds.forEach(clearTimeout);
+    };
+  }, [response]);
+
+  // Auto-scroll to bottom
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+    }
+  }, [visibleCount, showTyping]);
+
+  const getEmotionColor = (emotion: string) => {
+    switch (emotion) {
+      case "playful": return "border-l-[oklch(0.75_0.15_150)]";
+      case "worried": return "border-l-[oklch(0.7_0.15_60)]";
+      case "smug": return "border-l-[oklch(0.75_0.15_290)]";
+      case "serious": return "border-l-[oklch(0.65_0.15_25)]";
+      case "excited": return "border-l-[oklch(0.8_0.15_130)]";
+      default: return "border-l-primary/50";
+    }
+  };
+
+  const getBubbleTypeIcon = (type: string) => {
+    switch (type) {
+      case "reaction": return "💬";
+      case "roast": return "🔥";
+      case "advice": return "💡";
+      case "warning": return "⚠️";
+      case "question": return "❓";
+      case "suggested_message": return "✉️";
+      default: return "💬";
+    }
+  };
+
+  const isInterrupt = response.responseStyle === "interrupt";
+
+  return (
+    <div ref={containerRef} className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+      {/* Response style & visibility badges */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+          isInterrupt
+            ? "bg-destructive/15 text-destructive border border-destructive/30"
+            : "bg-primary/15 text-primary border border-primary/25"
+        }`}>
+          {isInterrupt && <AlertTriangle className="w-3 h-3" />}
+          {response.responseStyle}
+        </span>
+        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-secondary/80 text-muted-foreground border border-border/50">
+          {response.visibility}
+        </span>
+        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+          response.riskLevel === "high" ? "bg-destructive/15 text-destructive border border-destructive/30" :
+          response.riskLevel === "medium" ? "bg-[oklch(0.7_0.12_60)]/15 text-[oklch(0.7_0.12_60)] border border-[oklch(0.7_0.12_60)]/30" :
+          "bg-primary/15 text-primary border border-primary/25"
+        }`}>
+          risk: {response.riskLevel}
+        </span>
+        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-secondary/80 text-muted-foreground border border-border/50">
+          conf: {(response.confidence * 100).toFixed(0)}%
+        </span>
+      </div>
+
+      {/* Bubbles */}
+      {response.bubbles.slice(0, visibleCount).map((bubble, i) => (
+        <div
+          key={i}
+          className={`flex items-start gap-2 animate-in slide-in-from-bottom-2 fade-in duration-300 ${
+            isInterrupt ? "animate-in shake" : ""
+          }`}
+        >
+          <span className="text-sm mt-0.5 shrink-0">{getBubbleTypeIcon(bubble.type)}</span>
+          <div className={`flex-1 p-3 rounded-xl rounded-tl-sm border-l-3 ${getEmotionColor(bubble.emotion)} ${
+            isInterrupt && bubble.type === "warning"
+              ? "bg-destructive/8 border border-destructive/20"
+              : "bg-secondary/60 border border-border/30"
+          }`}>
+            <p className="text-sm text-foreground leading-relaxed">{bubble.text}</p>
+            <div className="flex items-center gap-2 mt-1.5">
+              <span className="text-[10px] text-muted-foreground/60 font-mono">{bubble.type}</span>
+              <span className="text-[10px] text-muted-foreground/60">·</span>
+              <span className="text-[10px] text-muted-foreground/60">{bubble.emotion}</span>
+            </div>
+          </div>
+        </div>
+      ))}
+
+      {/* Typing indicator */}
+      {showTyping && (
+        <div className="flex items-center gap-2 animate-in fade-in duration-200">
+          <span className="text-sm shrink-0">💭</span>
+          <div className="px-4 py-2.5 rounded-xl bg-secondary/40 border border-border/20">
+            <div className="flex gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:0ms]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:150ms]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:300ms]" />
+            </div>
+          </div>
+          <span className="text-xs text-muted-foreground/50">{personaName} 正在输入...</span>
+        </div>
+      )}
+
+      {/* Suggested Public Message */}
+      {visibleCount >= response.bubbles.length && response.suggestedPublicMessage && (
+        <div className="mt-4 p-3 rounded-xl bg-primary/8 border border-primary/25 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <Zap className="w-3.5 h-3.5 text-primary" />
+            <span className="text-xs font-medium text-primary">建议发送的消息</span>
+          </div>
+          <p className="text-sm text-foreground leading-relaxed mb-2">{response.suggestedPublicMessage}</p>
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-xs border-primary/30 text-primary hover:bg-primary/10"
+            onClick={() => {
+              navigator.clipboard.writeText(response.suggestedPublicMessage!);
+              toast.success("已复制到剪贴板");
+            }}
+          >
+            <Copy className="w-3 h-3 mr-1" />
+            复制使用此消息
+          </Button>
+        </div>
+      )}
+
+      {/* Quick Replies */}
+      {visibleCount >= response.bubbles.length && response.quickReplies.length > 0 && (
+        <div className="mt-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <span className="text-xs text-muted-foreground mb-2 block">快速回复选项：</span>
+          <div className="flex flex-wrap gap-2">
+            {response.quickReplies.map((reply, i) => (
+              <button
+                key={i}
+                className="px-3 py-1.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/25 hover:bg-primary/20 transition-colors"
+                onClick={() => toast.info(`选择了: ${reply}`)}
+              >
+                {reply}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -113,12 +316,12 @@ export default function Playground() {
 function SuggestionPanel() {
   const [persona, setPersona] = useState<PersonaId>("sassy_roast_bestie");
   const [rawMessage, setRawMessage] = useState("我想约她看电影，但不想尴尬。");
-  const [mode, setMode] = useState<"icebreaker" | "rewrite" | "boundary" | "plan">("icebreaker");
+  const [mode, setMode] = useState<"icebreaker" | "rewrite" | "boundary" | "plan" | "whisper" | "offline_profile">("icebreaker");
   const [contextInput, setContextInput] = useState("Alice: 今晚有人想看电影吗？");
-  const [result, setResult] = useState<Record<string, unknown> | null>(null);
+  const [result, setResult] = useState<BubblesResponse | null>(null);
 
   const mutation = trpc.pixie.suggestion.useMutation({
-    onSuccess: (data) => setResult(data as unknown as Record<string, unknown>),
+    onSuccess: (data) => setResult(data as BubblesResponse),
   });
 
   const handleSubmit = () => {
@@ -155,6 +358,8 @@ function SuggestionPanel() {
     });
   };
 
+  const personaName = PERSONAS.find(p => p.id === persona)?.name ?? "Lumi";
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Input panel */}
@@ -169,12 +374,12 @@ function SuggestionPanel() {
 
           <div>
             <label className="text-sm text-muted-foreground mb-1 block">模式 (mode)</label>
-            <div className="grid grid-cols-2 gap-2">
-              {(["icebreaker", "rewrite", "boundary", "plan"] as const).map((m) => (
+            <div className="grid grid-cols-3 gap-2">
+              {(["icebreaker", "rewrite", "boundary", "plan", "whisper", "offline_profile"] as const).map((m) => (
                 <button
                   key={m}
                   onClick={() => setMode(m)}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                  className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                     mode === m
                       ? "bg-primary/20 text-primary border border-primary/40"
                       : "bg-secondary/50 text-muted-foreground border border-border/50 hover:border-primary/20"
@@ -223,11 +428,14 @@ function SuggestionPanel() {
 
       {/* Response panel */}
       <div className="cosmic-card rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-foreground mb-4">响应结果</h3>
+        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+          <MessageCircle className="w-4 h-4 text-primary" />
+          {personaName} 的回复
+        </h3>
         {mutation.isPending && (
           <div className="flex items-center justify-center h-48 text-muted-foreground">
             <Loader2 className="w-6 h-6 animate-spin mr-2" />
-            {PERSONAS.find(p => p.id === persona)?.name} 正在思考...
+            {personaName} 正在思考...
           </div>
         )}
         {mutation.error && (
@@ -237,20 +445,13 @@ function SuggestionPanel() {
         )}
         {result && !mutation.isPending && (
           <div className="space-y-4">
-            <div className="space-y-3">
-              <ResponseField label="detectedIntent" value={result.detectedIntent as string} />
-              <ResponseField label="emotionDetected" value={JSON.stringify(result.emotionDetected)} />
-              <ResponseField label="suggestedMessage" value={result.suggestedMessage as string} highlight />
-              <ResponseField label="pixieComment" value={result.pixieComment as string} />
-              <ResponseField label="riskLevel" value={result.riskLevel as string} badge />
-              <ResponseField label="confidence" value={String(result.confidence)} />
-            </div>
-            <JsonViewer data={result} />
+            <BubblesRenderer response={result} personaName={personaName} />
+            <JsonViewer data={result as unknown as Record<string, unknown>} />
           </div>
         )}
         {!result && !mutation.isPending && !mutation.error && (
           <div className="flex items-center justify-center h-48 text-muted-foreground/60 text-sm">
-            点击"发送请求"查看回复
+            点击"发送请求"查看 {personaName} 的回复
           </div>
         )}
       </div>
@@ -264,10 +465,10 @@ function ChatPanel() {
   const [persona, setPersona] = useState<PersonaId>("sassy_roast_bestie");
   const [privateQuestion, setPrivateQuestion] = useState("她说想去 Waterloo 看电影，我是不是该主动定时间？");
   const [contextInput, setContextInput] = useState("Alice: 那我们去 Waterloo 那边的影院？\nJiaYi: 好啊！");
-  const [result, setResult] = useState<Record<string, unknown> | null>(null);
+  const [result, setResult] = useState<BubblesResponse | null>(null);
 
   const mutation = trpc.pixie.chat.useMutation({
-    onSuccess: (data) => setResult(data as unknown as Record<string, unknown>),
+    onSuccess: (data) => setResult(data as BubblesResponse),
   });
 
   const handleSubmit = () => {
@@ -302,6 +503,8 @@ function ChatPanel() {
       chatContext,
     });
   };
+
+  const personaName = PERSONAS.find(p => p.id === persona)?.name ?? "Lumi";
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -350,11 +553,14 @@ function ChatPanel() {
       </div>
 
       <div className="cosmic-card rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-foreground mb-4">响应结果</h3>
+        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+          <MessageCircle className="w-4 h-4 text-primary" />
+          {personaName} 的私聊回复
+        </h3>
         {mutation.isPending && (
           <div className="flex items-center justify-center h-48 text-muted-foreground">
             <Loader2 className="w-6 h-6 animate-spin mr-2" />
-            {PERSONAS.find(p => p.id === persona)?.name} 正在思考...
+            {personaName} 正在思考...
           </div>
         )}
         {mutation.error && (
@@ -364,17 +570,13 @@ function ChatPanel() {
         )}
         {result && !mutation.isPending && (
           <div className="space-y-4">
-            <div className="space-y-3">
-              <ResponseField label="privateAdvice" value={result.privateAdvice as string} highlight />
-              <ResponseField label="suggestedMessage" value={result.suggestedMessage as string | null} />
-              <ResponseField label="safetyNote" value={result.safetyNote as string | null} warning />
-            </div>
-            <JsonViewer data={result} />
+            <BubblesRenderer response={result} personaName={personaName} />
+            <JsonViewer data={result as unknown as Record<string, unknown>} />
           </div>
         )}
         {!result && !mutation.isPending && !mutation.error && (
           <div className="flex items-center justify-center h-48 text-muted-foreground/60 text-sm">
-            点击"发送请求"查看回复
+            点击"发送请求"查看 {personaName} 的私聊回复
           </div>
         )}
       </div>
@@ -392,10 +594,10 @@ function AutoContextPanel() {
   const [activity, setActivity] = useState("watch a movie");
   const [area, setArea] = useState("Waterloo");
   const [time, setTime] = useState("tonight");
-  const [result, setResult] = useState<Record<string, unknown> | null>(null);
+  const [result, setResult] = useState<BubblesResponse | null>(null);
 
   const mutation = trpc.pixie.autoContext.useMutation({
-    onSuccess: (data) => setResult(data as unknown as Record<string, unknown>),
+    onSuccess: (data) => setResult(data as BubblesResponse),
   });
 
   const handleSubmit = () => {
@@ -430,6 +632,8 @@ function AutoContextPanel() {
       activityIntent: activity ? { activity, area, time } : undefined,
     });
   };
+
+  const personaName = PERSONAS.find(p => p.id === persona)?.name ?? "Lumi";
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -492,11 +696,14 @@ function AutoContextPanel() {
       </div>
 
       <div className="cosmic-card rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-foreground mb-4">响应结果</h3>
+        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+          <Eye className="w-4 h-4 text-primary" />
+          {personaName} 的上下文分析
+        </h3>
         {mutation.isPending && (
           <div className="flex items-center justify-center h-48 text-muted-foreground">
             <Loader2 className="w-6 h-6 animate-spin mr-2" />
-            {PERSONAS.find(p => p.id === persona)?.name} 正在读取房间...
+            {personaName} 正在读取房间...
           </div>
         )}
         {mutation.error && (
@@ -506,20 +713,13 @@ function AutoContextPanel() {
         )}
         {result && !mutation.isPending && (
           <div className="space-y-4">
-            <div className="space-y-3">
-              <ResponseField label="shouldSpeak" value={String(result.shouldSpeak)} badge />
-              <ResponseField label="visibility" value={result.visibility as string} badge />
-              <ResponseField label="triggerReason" value={result.triggerReason as string} />
-              <ResponseField label="pixieMessage" value={result.pixieMessage as string} highlight />
-              <ResponseField label="suggestedAction" value={result.suggestedAction as string} badge />
-              <ResponseField label="riskLevel" value={result.riskLevel as string} badge />
-            </div>
-            <JsonViewer data={result} />
+            <BubblesRenderer response={result} personaName={personaName} />
+            <JsonViewer data={result as unknown as Record<string, unknown>} />
           </div>
         )}
         {!result && !mutation.isPending && !mutation.error && (
           <div className="flex items-center justify-center h-48 text-muted-foreground/60 text-sm">
-            点击"发送请求"查看分析
+            点击"发送请求"查看 {personaName} 的分析
           </div>
         )}
       </div>
@@ -543,6 +743,7 @@ function validateContextLines(input: string): string | null {
 
 function JsonViewer({ data }: { data: Record<string, unknown> }) {
   const [copied, setCopied] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const json = JSON.stringify(data, null, 2);
 
   const handleCopy = () => {
@@ -555,54 +756,21 @@ function JsonViewer({ data }: { data: Record<string, unknown> }) {
   return (
     <div className="rounded-lg bg-[oklch(0.1_0.03_270)] border border-border/30 overflow-hidden">
       <div className="flex items-center justify-between px-3 py-2 border-b border-border/30">
-        <span className="text-xs text-muted-foreground flex items-center gap-1">
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="text-xs text-muted-foreground flex items-center gap-1 hover:text-primary transition-colors"
+        >
           <Code className="w-3 h-3" />
-          JSON Response
-        </span>
+          {expanded ? "收起 JSON" : "展开 JSON"}
+        </button>
         <button onClick={handleCopy} className="text-muted-foreground hover:text-primary transition-colors">
           {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
         </button>
       </div>
-      <pre className="p-3 text-xs font-mono text-muted-foreground overflow-x-auto leading-relaxed max-h-64 overflow-y-auto">
-        {json}
-      </pre>
-    </div>
-  );
-}
-
-/* ─── Shared Components ────────────────────────────────────── */
-
-function ResponseField({ label, value, highlight, badge, warning }: {
-  label: string;
-  value: string | null;
-  highlight?: boolean;
-  badge?: boolean;
-  warning?: boolean;
-}) {
-  if (value === null || value === "null") {
-    return (
-      <div className="flex flex-col gap-1">
-        <span className="text-xs font-mono text-muted-foreground">{label}</span>
-        <span className="text-sm text-muted-foreground/50 italic">null</span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="text-xs font-mono text-muted-foreground">{label}</span>
-      {badge ? (
-        <span className="inline-block w-fit px-2 py-0.5 rounded-full text-xs font-medium bg-primary/15 text-primary border border-primary/25">
-          {value}
-        </span>
-      ) : warning ? (
-        <div className="p-2 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
-          {value}
-        </div>
-      ) : (
-        <p className={`text-sm leading-relaxed ${highlight ? "text-foreground font-medium" : "text-muted-foreground"}`}>
-          {value}
-        </p>
+      {expanded && (
+        <pre className="p-3 text-xs font-mono text-muted-foreground overflow-x-auto leading-relaxed max-h-64 overflow-y-auto">
+          {json}
+        </pre>
       )}
     </div>
   );

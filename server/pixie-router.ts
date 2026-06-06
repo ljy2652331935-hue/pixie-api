@@ -1,8 +1,8 @@
 /**
- * Pixie API Router
- * ────────────────
+ * Pixie API Router — Conversation Realism Edition
+ * ─────────────────────────────────────────────────
  * 三个核心端点：suggestion / chat / autoContext
- * 支持 6 个人格 + 6 个模式的两层 prompt 组装系统
+ * 统一输出 bubbles 格式，支持逐条气泡渲染
  */
 
 import { z } from "zod";
@@ -40,11 +40,30 @@ const personaSchema = z.enum([
   "calm_strategist",
 ]);
 
-const suggestionModeSchema = z.enum(["icebreaker", "rewrite", "boundary", "plan"]);
+const suggestionModeSchema = z.enum(["icebreaker", "rewrite", "boundary", "plan", "whisper", "offline_profile"]);
+
+// ─── Bubbles response type ───────────────────────────────────
+
+interface BubbleItem {
+  type: "reaction" | "roast" | "advice" | "warning" | "question" | "suggested_message";
+  text: string;
+  emotion: "neutral" | "playful" | "worried" | "smug" | "serious" | "excited";
+  delayMs: number;
+}
+
+interface BubblesResponse {
+  responseStyle: "single" | "multi" | "clarify" | "interrupt";
+  visibility: "private" | "public_suggestion" | "public_pixie";
+  bubbles: BubbleItem[];
+  suggestedPublicMessage: string | null;
+  quickReplies: string[];
+  riskLevel: "low" | "medium" | "high";
+  confidence: number;
+}
 
 // ─── Helper: call LLM and parse JSON ──────────────────────
 
-async function callPixieLLM(systemPrompt: string, userMessage: string) {
+async function callPixieLLM(systemPrompt: string, userMessage: string): Promise<BubblesResponse> {
   const result = await invokeLLM({
     model: "gpt-5-mini",
     messages: [
@@ -65,7 +84,23 @@ async function callPixieLLM(systemPrompt: string, userMessage: string) {
     cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, "").replace(/\n?```\s*$/, "");
   }
 
-  return JSON.parse(cleaned);
+  const parsed = JSON.parse(cleaned);
+
+  // Normalize and validate the response
+  return {
+    responseStyle: parsed.responseStyle ?? "single",
+    visibility: parsed.visibility ?? "private",
+    bubbles: Array.isArray(parsed.bubbles) ? parsed.bubbles.map((b: any) => ({
+      type: b.type ?? "advice",
+      text: b.text ?? "",
+      emotion: b.emotion ?? "neutral",
+      delayMs: typeof b.delayMs === "number" ? b.delayMs : 0,
+    })) : [],
+    suggestedPublicMessage: parsed.suggestedPublicMessage ?? null,
+    quickReplies: Array.isArray(parsed.quickReplies) ? parsed.quickReplies : [],
+    riskLevel: parsed.riskLevel ?? "low",
+    confidence: typeof parsed.confidence === "number" ? parsed.confidence : 0.8,
+  };
 }
 
 // ─── Build user messages ──────────────────────────────────
@@ -144,16 +179,7 @@ export const pixieRouter = router({
         input.chatContext
       );
 
-      const result = await callPixieLLM(systemPrompt, userMessage);
-
-      return {
-        detectedIntent: result.detectedIntent as string,
-        emotionDetected: result.emotionDetected as string[],
-        suggestedMessage: result.suggestedMessage as string,
-        pixieComment: result.pixieComment as string,
-        riskLevel: result.riskLevel as "low" | "medium" | "high",
-        confidence: result.confidence as number,
-      };
+      return await callPixieLLM(systemPrompt, userMessage);
     }),
 
   chat: publicProcedure
@@ -175,13 +201,7 @@ export const pixieRouter = router({
         input.chatContext
       );
 
-      const result = await callPixieLLM(systemPrompt, userMessage);
-
-      return {
-        privateAdvice: result.privateAdvice as string,
-        suggestedMessage: (result.suggestedMessage ?? null) as string | null,
-        safetyNote: (result.safetyNote ?? null) as string | null,
-      };
+      return await callPixieLLM(systemPrompt, userMessage);
     }),
 
   autoContext: publicProcedure
@@ -203,15 +223,6 @@ export const pixieRouter = router({
         input.activityIntent
       );
 
-      const result = await callPixieLLM(systemPrompt, userMessage);
-
-      return {
-        shouldSpeak: result.shouldSpeak as boolean,
-        visibility: result.visibility as "private" | "public",
-        triggerReason: result.triggerReason as string,
-        pixieMessage: result.pixieMessage as string,
-        suggestedAction: result.suggestedAction as "icebreaker" | "rewrite" | "boundary" | "plan" | "safety" | "none",
-        riskLevel: result.riskLevel as "low" | "medium" | "high",
-      };
+      return await callPixieLLM(systemPrompt, userMessage);
     }),
 });
