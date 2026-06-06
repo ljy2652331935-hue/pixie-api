@@ -851,9 +851,7 @@ function AutoContextPanel() {
   const [contextInput, setContextInput] = useState(
     "Alice: 今晚有人想看电影吗？\nJiaYi: 我也想看！\nAlice: 轻松一点的吧，不要恐怖片\nJiaYi: 好的没问题"
   );
-  const [activity, setActivity] = useState("watch a movie");
-  const [area, setArea] = useState("Waterloo");
-  const [time, setTime] = useState("tonight");
+
   const [result, setResult] = useState<PresenceResponse | null>(null);
 
   const mutation = trpc.pixie.autoContext.useMutation({
@@ -889,7 +887,7 @@ function AutoContextPanel() {
       pixieId: "lumi",
       persona,
       chatContext,
-      activityIntent: activity ? { activity, area, time } : undefined,
+
     });
   };
 
@@ -916,29 +914,7 @@ function AutoContextPanel() {
             />
           </div>
 
-          <div>
-            <label className="text-sm text-muted-foreground mb-1 block">活动意图 (activityIntent)</label>
-            <div className="grid grid-cols-3 gap-2">
-              <input
-                value={activity}
-                onChange={(e) => setActivity(e.target.value)}
-                className="rounded-lg bg-input border border-border/50 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                placeholder="activity"
-              />
-              <input
-                value={area}
-                onChange={(e) => setArea(e.target.value)}
-                className="rounded-lg bg-input border border-border/50 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                placeholder="area"
-              />
-              <input
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-                className="rounded-lg bg-input border border-border/50 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                placeholder="time"
-              />
-            </div>
-          </div>
+
 
           <Button
             onClick={handleSubmit}
