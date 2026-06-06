@@ -57,3 +57,11 @@
 - [x] 前端 Playground 新增 Express 面板，支持 targetUser 和 userVoiceProfile 输入
 - [x] 前端 Express 面板显示 privateBubbles 气泡动画 + suggestedPublicMessage 卡片 + riskFlags 标签
 - [x] 更新测试覆盖 Express API 新字段
+
+## Pixie Presence API 升级 (原 Auto Context)
+- [x] 后端升级 autoContext prompt 为完整 Presence 系统（10 条发言条件 + 7 条沉默条件）
+- [x] 后端新增输出字段：interventionType / reason / message / suggestedNextAction / planUpdate / cooldownTurns
+- [x] 后端 interventionType 支持 8 种类型（boost_owner / bridge_topic / break_ice / plan_push / safety_check / clarify_misunderstanding / owner_requested / stay_silent）
+- [x] 后端 planUpdate 对象支持 activity / time / place / notes
+- [x] 前端 Playground Auto Context 面板展示新字段（interventionType 标签、planUpdate 卡片、cooldownTurns）
+- [x] 更新测试覆盖 Presence API 新字段

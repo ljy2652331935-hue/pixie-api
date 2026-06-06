@@ -90,8 +90,8 @@ describe("pixie.chat", () => {
   }, 30000);
 });
 
-describe("pixie.autoContext", () => {
-  it("returns bubbles-format auto context response", async () => {
+describe("pixie.autoContext (Presence)", () => {
+  it("returns presence-format response with shouldSpeak, interventionType, planUpdate", async () => {
     const caller = appRouter.createCaller(createPublicContext());
 
     const result = await caller.pixie.autoContext({
@@ -106,7 +106,31 @@ describe("pixie.autoContext", () => {
       activityIntent: { activity: "watch a movie", area: "Waterloo", time: "tonight" },
     });
 
-    validateBubblesResponse(result);
+    // Validate Presence response fields
+    expect(result).toHaveProperty("shouldSpeak");
+    expect(typeof result.shouldSpeak).toBe("boolean");
+    expect(result).toHaveProperty("visibility");
+    expect(["public_pixie", "private_whisper", "none"]).toContain(result.visibility);
+    expect(result).toHaveProperty("interventionType");
+    expect(["boost_owner", "bridge_topic", "break_ice", "plan_push", "safety_check", "clarify_misunderstanding", "owner_requested", "stay_silent"]).toContain(result.interventionType);
+    expect(result).toHaveProperty("reason");
+    expect(typeof result.reason).toBe("string");
+    expect(result).toHaveProperty("message");
+    expect(result).toHaveProperty("suggestedNextAction");
+    expect(["none", "ask_question", "suggest_reply", "update_plan", "add_to_plan_card", "wait"]).toContain(result.suggestedNextAction);
+    expect(result).toHaveProperty("planUpdate");
+    expect(result.planUpdate).toHaveProperty("activity");
+    expect(result.planUpdate).toHaveProperty("time");
+    expect(result.planUpdate).toHaveProperty("place");
+    expect(result.planUpdate).toHaveProperty("notes");
+    expect(result).toHaveProperty("cooldownTurns");
+    expect(typeof result.cooldownTurns).toBe("number");
+    expect(result).toHaveProperty("riskLevel");
+    expect(["low", "medium", "high"]).toContain(result.riskLevel);
+    expect(result).toHaveProperty("confidence");
+    expect(typeof result.confidence).toBe("number");
+    expect(result.confidence).toBeGreaterThanOrEqual(0);
+    expect(result.confidence).toBeLessThanOrEqual(1);
   }, 30000);
 });
 

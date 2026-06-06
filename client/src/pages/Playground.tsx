@@ -1012,7 +1012,20 @@ function ChatPanel() {
   );
 }
 
-/* ─── Auto Context Panel ───────────────────────────────────── */
+/* ─── Auto Context (Presence) Panel ─────────────────────────── */
+
+interface PresenceResponse {
+  shouldSpeak: boolean;
+  visibility: string;
+  interventionType: string;
+  reason: string;
+  message: string | null;
+  suggestedNextAction: string;
+  planUpdate: { activity: string | null; time: string | null; place: string | null; notes: string | null };
+  cooldownTurns: number;
+  riskLevel: string;
+  confidence: number;
+}
 
 function AutoContextPanel() {
   const [persona, setPersona] = useState<PersonaId>("sassy_roast_bestie");
@@ -1022,10 +1035,10 @@ function AutoContextPanel() {
   const [activity, setActivity] = useState("watch a movie");
   const [area, setArea] = useState("Waterloo");
   const [time, setTime] = useState("tonight");
-  const [result, setResult] = useState<BubblesResponse | null>(null);
+  const [result, setResult] = useState<PresenceResponse | null>(null);
 
   const mutation = trpc.pixie.autoContext.useMutation({
-    onSuccess: (data) => setResult(data as BubblesResponse),
+    onSuccess: (data) => setResult(data as unknown as PresenceResponse),
   });
 
   const handleSubmit = () => {
@@ -1141,13 +1154,64 @@ function AutoContextPanel() {
         )}
         {result && !mutation.isPending && (
           <div className="space-y-4">
-            <BubblesRenderer response={result} personaName={personaName} />
+            {/* Presence Decision */}
+            <div className={`p-4 rounded-lg border ${result.shouldSpeak ? 'bg-primary/10 border-primary/30' : 'bg-muted/30 border-border/50'}`}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className={`w-3 h-3 rounded-full ${result.shouldSpeak ? 'bg-green-400 animate-pulse' : 'bg-muted-foreground/40'}`} />
+                <span className="font-semibold text-foreground">
+                  {result.shouldSpeak ? `${personaName} 决定发言` : `${personaName} 选择沉默`}
+                </span>
+                <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary">
+                  {result.interventionType.replace(/_/g, ' ')}
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground">{result.reason}</p>
+            </div>
+
+            {/* Message */}
+            {result.message && (
+              <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+                <p className="text-sm text-muted-foreground mb-1">{personaName} 的消息：</p>
+                <p className="text-foreground font-medium">"{result.message}"</p>
+                <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                  <span>visibility: <span className="text-primary">{result.visibility}</span></span>
+                  <span>cooldown: <span className="text-primary">{result.cooldownTurns} turns</span></span>
+                </div>
+              </div>
+            )}
+
+            {/* Plan Update */}
+            {(result.planUpdate.activity || result.planUpdate.time || result.planUpdate.place || result.planUpdate.notes) && (
+              <div className="p-4 rounded-lg bg-accent/10 border border-accent/30">
+                <p className="text-sm font-medium text-foreground mb-2">Plan Update</p>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  {result.planUpdate.activity && <span className="text-muted-foreground">Activity: <span className="text-foreground">{result.planUpdate.activity}</span></span>}
+                  {result.planUpdate.time && <span className="text-muted-foreground">Time: <span className="text-foreground">{result.planUpdate.time}</span></span>}
+                  {result.planUpdate.place && <span className="text-muted-foreground">Place: <span className="text-foreground">{result.planUpdate.place}</span></span>}
+                  {result.planUpdate.notes && <span className="col-span-2 text-muted-foreground">Notes: <span className="text-foreground">{result.planUpdate.notes}</span></span>}
+                </div>
+              </div>
+            )}
+
+            {/* Meta */}
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <span className={`px-2 py-0.5 rounded-full ${
+                result.riskLevel === 'high' ? 'bg-destructive/20 text-destructive' :
+                result.riskLevel === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
+                'bg-green-500/20 text-green-400'
+              }`}>
+                risk: {result.riskLevel}
+              </span>
+              <span>confidence: {(result.confidence * 100).toFixed(0)}%</span>
+              <span>next: {result.suggestedNextAction}</span>
+            </div>
+
             <JsonViewer data={result as unknown as Record<string, unknown>} />
           </div>
         )}
         {!result && !mutation.isPending && !mutation.error && (
           <div className="flex items-center justify-center h-48 text-muted-foreground/60 text-sm">
-            点击"发送请求"查看 {personaName} 的分析
+            点击“发送请求”查看 {personaName} 的分析
           </div>
         )}
       </div>

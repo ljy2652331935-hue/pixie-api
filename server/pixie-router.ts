@@ -151,21 +151,97 @@ function buildChatUserMessage(
 
 function buildAutoContextUserMessage(
   chatContext: Array<{ senderName: string; content: string }>,
-  activityIntent?: { activity: string; area: string; time: string }
+  activityIntent?: { activity: string; area: string; time: string },
+  ownerMemory?: { publicAchievements: string[]; interests: string[] }
 ) {
-  let context = "## 当前聊天上下文\n";
+  let context = "## Current Chat Context\n";
   if (chatContext.length > 0) {
     context += chatContext.map(m => `- ${m.senderName}: ${m.content}`).join("\n");
   } else {
-    context += "（暂无聊天记录，双方刚匹配）";
+    context += "(No messages yet — both users just matched)";
   }
 
   let intent = "";
   if (activityIntent) {
-    intent = `\n\n## 活动意图\n- 活动: ${activityIntent.activity}\n- 区域: ${activityIntent.area}\n- 时间: ${activityIntent.time}`;
+    intent = `\n\n## Activity Intent\n- Activity: ${activityIntent.activity}\n- Area: ${activityIntent.area}\n- Time: ${activityIntent.time}`;
   }
 
-  return `${context}${intent}\n\n请分析当前聊天状态，判断是否需要发言以及如何发言。`;
+  let memory = "";
+  if (ownerMemory) {
+    const parts: string[] = [];
+    if (ownerMemory.publicAchievements.length > 0) {
+      parts.push(`- Public Achievements (allowed to mention): ${ownerMemory.publicAchievements.join(", ")}`);
+    }
+    if (ownerMemory.interests.length > 0) {
+      parts.push(`- Interests: ${ownerMemory.interests.join(", ")}`);
+    }
+    if (parts.length > 0) {
+      memory = `\n\n## Owner Memory\n${parts.join("\n")}`;
+    }
+  }
+
+  return `${context}${intent}${memory}\n\nAnalyze the current chat state and decide whether the Pixie should speak, and if so, what to say.`;
+}
+
+// ─── Presence LLM caller (different output format) ────────
+
+interface PresenceResponse {
+  shouldSpeak: boolean;
+  visibility: "public_pixie" | "private_whisper" | "none";
+  interventionType: "boost_owner" | "bridge_topic" | "break_ice" | "plan_push" | "safety_check" | "clarify_misunderstanding" | "owner_requested" | "stay_silent";
+  reason: string;
+  message: string | null;
+  suggestedNextAction: "none" | "ask_question" | "suggest_reply" | "update_plan" | "add_to_plan_card" | "wait";
+  planUpdate: {
+    activity: string | null;
+    time: string | null;
+    place: string | null;
+    notes: string | null;
+  };
+  cooldownTurns: number;
+  riskLevel: "low" | "medium" | "high";
+  confidence: number;
+}
+
+async function callPresenceLLM(systemPrompt: string, userMessage: string): Promise<PresenceResponse> {
+  const result = await invokeLLM({
+    model: "gpt-5-mini",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userMessage },
+    ],
+    max_tokens: 2048,
+  });
+
+  const raw = result.choices[0]?.message?.content;
+  if (!raw || typeof raw !== "string") {
+    throw new Error("LLM returned empty content");
+  }
+
+  let cleaned = raw.trim();
+  if (cleaned.startsWith("```")) {
+    cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, "").replace(/\n?```\s*$/, "");
+  }
+
+  const parsed = JSON.parse(cleaned);
+
+  return {
+    shouldSpeak: typeof parsed.shouldSpeak === "boolean" ? parsed.shouldSpeak : false,
+    visibility: ["public_pixie", "private_whisper", "none"].includes(parsed.visibility) ? parsed.visibility : "none",
+    interventionType: ["boost_owner", "bridge_topic", "break_ice", "plan_push", "safety_check", "clarify_misunderstanding", "owner_requested", "stay_silent"].includes(parsed.interventionType) ? parsed.interventionType : "stay_silent",
+    reason: typeof parsed.reason === "string" ? parsed.reason : "",
+    message: typeof parsed.message === "string" ? parsed.message : null,
+    suggestedNextAction: ["none", "ask_question", "suggest_reply", "update_plan", "add_to_plan_card", "wait"].includes(parsed.suggestedNextAction) ? parsed.suggestedNextAction : "wait",
+    planUpdate: {
+      activity: parsed.planUpdate?.activity ?? null,
+      time: parsed.planUpdate?.time ?? null,
+      place: parsed.planUpdate?.place ?? null,
+      notes: parsed.planUpdate?.notes ?? null,
+    },
+    cooldownTurns: typeof parsed.cooldownTurns === "number" ? parsed.cooldownTurns : 3,
+    riskLevel: ["low", "medium", "high"].includes(parsed.riskLevel) ? parsed.riskLevel : "low",
+    confidence: typeof parsed.confidence === "number" ? Math.min(1, Math.max(0, parsed.confidence)) : 0.8,
+  };
 }
 
 // ─── Build Express user message ─────────────────────────────
@@ -281,6 +357,10 @@ export const pixieRouter = router({
         persona: personaSchema.default("sassy_roast_bestie"),
         chatContext: z.array(chatMessageSchema).default([]),
         activityIntent: activityIntentSchema.optional(),
+        ownerMemory: z.object({
+          publicAchievements: z.array(z.string()).default([]),
+          interests: z.array(z.string()).default([]),
+        }).optional(),
       })
     )
     .mutation(async ({ input }) => {
@@ -288,10 +368,11 @@ export const pixieRouter = router({
 
       const userMessage = buildAutoContextUserMessage(
         input.chatContext,
-        input.activityIntent
+        input.activityIntent,
+        input.ownerMemory
       );
 
-      return await callPixieLLM(systemPrompt, userMessage);
+      return await callPresenceLLM(systemPrompt, userMessage);
     }),
 
   // ─── Express API (Intent-to-Expression) ─────────────────────
