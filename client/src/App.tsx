@@ -7,6 +7,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Playground from "./pages/Playground";
 import Docs from "./pages/Docs";
+import LiveChat from "./pages/LiveChat";
 
 function Router() {
   return (
@@ -14,6 +15,7 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/playground"} component={Playground} />
       <Route path={"/docs"} component={Docs} />
+      <Route path={"/chat"} component={LiveChat} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

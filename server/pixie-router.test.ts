@@ -166,6 +166,43 @@ describe("pixie.autoContext (Presence)", () => {
 
 
 
+describe("pixie.liveChat", () => {
+  it("returns bubbles + quickReplies + suggestedAction for multi-turn conversation", async () => {
+    const caller = appRouter.createCaller(createPublicContext());
+
+    const result = await caller.pixie.liveChat({
+      persona: "sassy_roast_bestie",
+      messages: [
+        { role: "user", content: "今天好累啊" },
+      ],
+    });
+
+    // Validate bubbles
+    expect(Array.isArray(result.bubbles)).toBe(true);
+    expect(result.bubbles.length).toBeGreaterThan(0);
+    for (const bubble of result.bubbles) {
+      expect(bubble).toHaveProperty("type");
+      expect(bubble).toHaveProperty("text");
+      expect(typeof bubble.text).toBe("string");
+      expect(bubble.text.length).toBeGreaterThan(0);
+      expect(bubble).toHaveProperty("emotion");
+      expect(bubble).toHaveProperty("delayMs");
+      expect(typeof bubble.delayMs).toBe("number");
+    }
+
+    // suggestedAction
+    expect(result).toHaveProperty("suggestedAction");
+    expect(typeof result.suggestedAction).toBe("string");
+
+    // quickReplies
+    expect(Array.isArray(result.quickReplies)).toBe(true);
+    expect(result.quickReplies.length).toBeGreaterThan(0);
+    for (const reply of result.quickReplies) {
+      expect(typeof reply).toBe("string");
+    }
+  }, 30000);
+});
+
 describe("pixie.personas", () => {
   it("returns the list of available personas", async () => {
     const caller = appRouter.createCaller(createPublicContext());

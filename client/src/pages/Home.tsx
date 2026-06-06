@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { Sparkles, MessageCircle, Eye, BookOpen, Play } from "lucide-react";
+import { Sparkles, MessageCircle, Eye, BookOpen, Play, MessagesSquare } from "lucide-react";
 
 export default function Home() {
   return (
@@ -21,6 +21,12 @@ export default function Home() {
             <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
               <Play className="w-4 h-4 mr-2" />
               Playground
+            </Button>
+          </Link>
+          <Link href="/chat">
+            <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+              <MessagesSquare className="w-4 h-4 mr-2" />
+              聊天
             </Button>
           </Link>
           <Link href="/docs">
@@ -73,7 +79,7 @@ export default function Home() {
         </div>
 
         {/* Feature cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-24 max-w-5xl w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-24 max-w-6xl w-full">
           <FeatureCard
             icon={<Sparkles className="w-6 h-6" />}
             title="Suggestion API"
@@ -88,10 +94,18 @@ export default function Home() {
           />
           <FeatureCard
             icon={<Eye className="w-6 h-6" />}
-            title="Auto Context API"
+            title="Presence API"
             description="自动读取聊天上下文，在合适时机主动提醒或发言"
             badge="P2"
           />
+          <Link href="/chat" className="block">
+            <FeatureCard
+              icon={<MessagesSquare className="w-6 h-6" />}
+              title="Live Chat"
+              description="和你的小精灵实时对话，获取情绪陪伴和社交建议"
+              badge="NEW"
+            />
+          </Link>
         </div>
       </main>
 

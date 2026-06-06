@@ -14,6 +14,7 @@ import {
   assembleAutoContextPrompt,
   assembleExpressPrompt,
   assembleSuggestPrompt,
+  assembleLiveChatPrompt,
   PERSONA_LIST,
   type PersonaId,
   type ModeId,
@@ -428,6 +429,70 @@ export const pixieRouter = router({
       );
 
       return await callPixieLLM(systemPrompt, userMessage);
+    }),
+
+  // ─── Live Chat (独立聊天窗口 — 多轮实时对话) ──────
+  liveChat: publicProcedure
+    .input(
+      z.object({
+        persona: personaSchema.default("sassy_roast_bestie"),
+        messages: z.array(
+          z.object({
+            role: z.enum(["user", "assistant"]),
+            content: z.string(),
+          })
+        ),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const systemPrompt = assembleLiveChatPrompt(input.persona as PersonaId);
+
+      const llmMessages = [
+        { role: "system" as const, content: systemPrompt },
+        ...input.messages.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
+      ];
+
+      const result = await invokeLLM({
+        model: "gpt-5-mini",
+        messages: llmMessages,
+        max_tokens: 1024,
+      });
+
+      const raw = result.choices[0]?.message?.content;
+      if (!raw || typeof raw !== "string") {
+        throw new Error("LLM returned empty content");
+      }
+
+      // Try to parse as JSON (structured response with bubbles)
+      let cleaned = raw.trim();
+      if (cleaned.startsWith("```")) {
+        cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, "").replace(/\n?```\s*$/, "");
+      }
+
+      try {
+        const parsed = JSON.parse(cleaned);
+        return {
+          type: "structured" as const,
+          content: raw,
+          bubbles: Array.isArray(parsed.bubbles) ? parsed.bubbles.map((b: any) => ({
+            type: ["reaction", "roast", "comfort", "advice", "question", "action", "warning"].includes(b.type) ? b.type : "advice",
+            text: typeof b.text === "string" ? b.text : "",
+            emotion: ["playful", "soft", "serious", "smug", "worried", "excited"].includes(b.emotion) ? b.emotion : "soft",
+            delayMs: typeof b.delayMs === "number" ? b.delayMs : 0,
+          })) : [],
+          suggestedAction: typeof parsed.suggestedAction === "string" ? parsed.suggestedAction : "none",
+          quickReplies: Array.isArray(parsed.quickReplies) ? parsed.quickReplies.filter((r: any) => typeof r === "string") : [],
+        };
+      } catch {
+        // Plain text response — just return it
+        return {
+          type: "text" as const,
+          content: cleaned,
+          bubbles: [{ type: "advice" as const, text: cleaned, emotion: "soft" as const, delayMs: 0 }],
+          suggestedAction: "none",
+          quickReplies: [],
+        };
+      }
     }),
 
   autoContext: publicProcedure
