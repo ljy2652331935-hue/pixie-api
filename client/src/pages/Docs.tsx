@@ -1,7 +1,27 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { ArrowLeft, Sparkles, MessageCircle, Eye, Copy, Check } from "lucide-react";
+import { ArrowLeft, Sparkles, MessageCircle, Eye, Copy, Check, Users, Layers } from "lucide-react";
 import { useState } from "react";
+
+// ─── Persona & Mode data ──────────────────────────────────────
+
+const PERSONAS = [
+  { id: "sassy_roast_bestie", name: "Lumi", label: "毒舌吐槽闺蜜", desc: "嘴快、护短、会吐槽，但很靠谱。调侃你的内耗和脑补，但不会羞辱你。", traits: ["sassy", "playful", "loyal", "protective", "emotionally sharp"] },
+  { id: "smooth_witty_fox", name: "Lumi", label: "机灵狐狸军师", desc: "聪明、嘴贫、松弛、看透局势但不装深沉。让你显得更松弛、更有边界。", traits: ["clever", "witty", "charming", "street-smart", "calm under pressure"] },
+  { id: "elegant_gentleman", name: "Soren", label: "优雅绅士", desc: "克制、有礼、温文尔雅。帮你表达得体面、清楚，不卑不亢。", traits: ["elegant", "polite", "measured", "dignified", "calm"] },
+  { id: "loyal_bro", name: "Koda", label: "兄弟护短", desc: "直爽、站你这边、不废话。帮你表达真实想法，不让你吃亏。", traits: ["loyal", "direct", "protective", "straightforward", "reliable"] },
+  { id: "soft_social_anxiety_helper", name: "Mimi", label: "温柔社恐辅助", desc: "温柔、低压力、不催你。帮你每次迈小一步，给对方空间也给你空间。", traits: ["soft", "warm", "patient", "reassuring", "low-pressure"] },
+  { id: "calm_strategist", name: "Orin", label: "冷静理性军师", desc: "冷静、简洁、稳定。快速判断局势、拆解风险、给出下一步。", traits: ["calm", "rational", "concise", "strategic", "grounded"] },
+];
+
+const MODES = [
+  { id: "icebreaker", label: "破冰", desc: "帮用户自然开口，低压力、可退出" },
+  { id: "rewrite", label: "改写", desc: "改写用户表达，让它更自然得体" },
+  { id: "boundary", label: "边界", desc: "表达不满或拒绝，有边界但不攻击" },
+  { id: "plan", label: "推进计划", desc: "把聊天推进成具体活动安排" },
+  { id: "whisper", label: "私聊军师", desc: "用户私下咨询，对方看不到" },
+  { id: "offline_profile", label: "离线资料卡", desc: "用户离线时的透明互动卡" },
+];
 
 export default function Docs() {
   return (
@@ -30,13 +50,106 @@ export default function Docs() {
         <section className="cosmic-card rounded-xl p-8">
           <h1 className="text-3xl font-bold text-foreground cosmic-glow mb-4">Pixie API 文档</h1>
           <p className="text-muted-foreground leading-relaxed mb-4">
-            Pixie 是 Sponty 平台的 AI 社交副驾驶系统，由 Lumi 小精灵驱动。提供三个核心能力层：
+            Pixie 是 Sponty 平台的 AI 社交副驾驶系统。提供三个核心能力层：
             表达建议（Suggestion）、私聊陪伴（Chat）和上下文感知（Auto Context）。
+            支持 6 种人格和 6 种模式的两层组合系统。
           </p>
           <p className="text-muted-foreground leading-relaxed">
             所有 API 通过 tRPC 协议调用，基础路径为 <code className="px-2 py-0.5 rounded bg-secondary text-primary font-mono text-sm">/api/trpc/pixie.*</code>。
-            也可以通过 Playground 页面进行交互式测试。
           </p>
+        </section>
+
+        {/* Persona System */}
+        <section className="cosmic-card rounded-xl p-8">
+          <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
+            <Users className="w-6 h-6 text-primary" />
+            人格系统 (Personas)
+          </h2>
+          <p className="text-muted-foreground leading-relaxed mb-6">
+            每个请求可通过 <code className="px-1.5 py-0.5 rounded bg-secondary text-primary font-mono text-xs">persona</code> 参数选择不同的 AI 人格。
+            人格决定了回复的语气、风格和态度。
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {PERSONAS.map((p) => (
+              <div key={p.id} className="rounded-lg bg-secondary/30 border border-border/30 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg font-bold text-foreground">{p.name}</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/25">
+                    {p.label}
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground mb-2">{p.desc}</p>
+                <div className="flex flex-wrap gap-1">
+                  {p.traits.map((t) => (
+                    <span key={t} className="text-xs px-1.5 py-0.5 rounded bg-secondary/50 text-muted-foreground">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+                <code className="block mt-2 text-xs font-mono text-primary/70">{p.id}</code>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Mode System */}
+        <section className="cosmic-card rounded-xl p-8">
+          <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
+            <Layers className="w-6 h-6 text-primary" />
+            模式系统 (Modes)
+          </h2>
+          <p className="text-muted-foreground leading-relaxed mb-6">
+            模式决定了当前的功能场景。Suggestion API 通过 <code className="px-1.5 py-0.5 rounded bg-secondary text-primary font-mono text-xs">mode</code> 参数切换，
+            Chat API 固定使用 whisper 模式，Auto Context API 自动判断适用模式。
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border/50">
+                  <th className="text-left py-3 px-4 text-muted-foreground font-medium">Mode ID</th>
+                  <th className="text-left py-3 px-4 text-muted-foreground font-medium">名称</th>
+                  <th className="text-left py-3 px-4 text-muted-foreground font-medium">说明</th>
+                  <th className="text-left py-3 px-4 text-muted-foreground font-medium">适用 API</th>
+                </tr>
+              </thead>
+              <tbody>
+                {MODES.map((m) => (
+                  <tr key={m.id} className="border-b border-border/30">
+                    <td className="py-3 px-4 font-mono text-primary text-xs">{m.id}</td>
+                    <td className="py-3 px-4 text-foreground font-medium">{m.label}</td>
+                    <td className="py-3 px-4 text-muted-foreground">{m.desc}</td>
+                    <td className="py-3 px-4 text-muted-foreground text-xs">
+                      {m.id === "whisper" ? "Chat" : m.id === "offline_profile" ? "Auto Context" : "Suggestion"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* Two-Layer Architecture */}
+        <section className="cosmic-card rounded-xl p-8">
+          <h2 className="text-2xl font-bold text-foreground mb-4">两层 Prompt 组装架构</h2>
+          <p className="text-muted-foreground leading-relaxed mb-4">
+            系统采用两层组装架构，每次 API 调用时动态拼接 prompt：
+          </p>
+          <div className="space-y-3">
+            {[
+              { layer: "Layer 1", name: "Base System Prompt", desc: "全局安全规则 + 通用行为规范（所有人格共享）" },
+              { layer: "Layer 2a", name: "Persona Prompt", desc: "人格性格 + 语气 + 可用/禁用短语" },
+              { layer: "Layer 2b", name: "Mode Prompt", desc: "当前模式的功能目标 + 规则" },
+              { layer: "Layer 3", name: "Output Schema", desc: "严格的 JSON 输出格式定义" },
+            ].map((item) => (
+              <div key={item.layer} className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30 border border-border/30">
+                <span className="text-xs font-mono text-primary whitespace-nowrap mt-0.5">{item.layer}</span>
+                <div>
+                  <span className="text-sm font-medium text-foreground">{item.name}</span>
+                  <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </section>
 
         {/* Suggestion API */}
@@ -45,17 +158,12 @@ export default function Docs() {
           title="Pixie Suggestion API"
           endpoint="pixie.suggestion"
           method="mutation"
-          description="分析用户原始输入，根据社交场景和模式，给出更自然、更适合的表达建议。"
-          modes={[
-            { name: "icebreaker", desc: "不知道怎么开口时的破冰建议" },
-            { name: "rewrite", desc: "改写已有表达，让它更自然得体" },
-            { name: "boundary", desc: "表达不满或拒绝，有边界但不攻击" },
-            { name: "plan", desc: "推进线下计划，包含时间地点活动" },
-          ]}
+          description="分析用户原始输入，根据社交场景和模式，给出更自然、更适合的表达建议。支持选择人格和模式。"
           requestFields={[
             { name: "roomId", type: "string", desc: "聊天房间 ID" },
             { name: "userId", type: "string", desc: "当前用户 ID" },
             { name: "pixieId", type: "string", desc: "小精灵 ID，默认 'lumi'" },
+            { name: "persona", type: "enum", desc: "人格选择（默认 sassy_roast_bestie）" },
             { name: "rawMessage", type: "string", desc: "用户原始输入" },
             { name: "mode", type: "enum", desc: "icebreaker | rewrite | boundary | plan" },
             { name: "chatContext", type: "array", desc: "聊天上下文消息数组" },
@@ -64,7 +172,7 @@ export default function Docs() {
             { name: "detectedIntent", type: "string", desc: "用户真正想表达的意思" },
             { name: "emotionDetected", type: "string[]", desc: "检测到的情绪数组" },
             { name: "suggestedMessage", type: "string", desc: "建议的消息（可直接发送）" },
-            { name: "pixieComment", type: "string", desc: "Lumi 的私下评论" },
+            { name: "pixieComment", type: "string", desc: "Pixie 的私下评论" },
             { name: "riskLevel", type: "enum", desc: "low | medium | high" },
             { name: "confidence", type: "number", desc: "置信度 0-1" },
           ]}
@@ -72,6 +180,7 @@ export default function Docs() {
   "roomId": "room-abc",
   "userId": "jiaYi",
   "pixieId": "lumi",
+  "persona": "smooth_witty_fox",
   "rawMessage": "我想约她看电影，但不想尴尬。",
   "mode": "icebreaker",
   "chatContext": [
@@ -79,12 +188,12 @@ export default function Docs() {
   ]
 }`}
           exampleResponse={`{
-  "detectedIntent": "想接话约看电影但怕尴尬",
-  "emotionDetected": ["期待", "紧张"],
-  "suggestedMessage": "我也想看！最近有什么好片推荐吗？",
-  "pixieComment": "直接接话就好，她都发出邀请了你还怕啥",
+  "detectedIntent": "JiaYi wants a casual invitation.",
+  "emotionDetected": ["nervous", "interested"],
+  "suggestedMessage": "Would you be up for watching something chill tonight? No pressure.",
+  "pixieComment": "Easy there. Don't chase, invite. Keep it light.",
   "riskLevel": "low",
-  "confidence": 0.92
+  "confidence": 0.9
 }`}
         />
 
@@ -94,16 +203,17 @@ export default function Docs() {
           title="Pixie Chat API"
           endpoint="pixie.chat"
           method="mutation"
-          description="用户可以私下和 Lumi 小精灵对话，获取社交建议、情绪陪伴和安全提醒。"
+          description="用户可以私下和 Pixie 对话，获取社交建议、情绪陪伴和安全提醒。使用 whisper 模式。"
           requestFields={[
             { name: "roomId", type: "string", desc: "聊天房间 ID" },
             { name: "userId", type: "string", desc: "当前用户 ID" },
             { name: "pixieId", type: "string", desc: "小精灵 ID，默认 'lumi'" },
+            { name: "persona", type: "enum", desc: "人格选择（默认 sassy_roast_bestie）" },
             { name: "privateQuestion", type: "string", desc: "用户私下问的问题" },
             { name: "chatContext", type: "array", desc: "公开聊天上下文" },
           ]}
           responseFields={[
-            { name: "privateAdvice", type: "string", desc: "Lumi 给用户的私下建议" },
+            { name: "privateAdvice", type: "string", desc: "Pixie 给用户的私下建议" },
             { name: "suggestedMessage", type: "string | null", desc: "可选的公开回复建议" },
             { name: "safetyNote", type: "string | null", desc: "可选的安全提醒" },
           ]}
@@ -111,15 +221,15 @@ export default function Docs() {
   "roomId": "room-abc",
   "userId": "jiaYi",
   "pixieId": "lumi",
+  "persona": "calm_strategist",
   "privateQuestion": "她说想去 Waterloo 看电影，我是不是该主动定时间？",
   "chatContext": [
-    { "senderName": "Alice", "senderType": "human", "content": "那我们去 Waterloo 那边的影院？" },
-    { "senderName": "JiaYi", "senderType": "human", "content": "好啊！" }
+    { "senderName": "Alice", "senderType": "human", "content": "那我们去 Waterloo 那边的影院？" }
   ]
 }`}
           exampleResponse={`{
-  "privateAdvice": "当然要主动啊！她都提了地点了，你来定时间和具体影院，展现一下靠谱的一面。",
-  "suggestedMessage": "我查了一下，Waterloo 那边的 IMAX 今晚 8 点有场次，要不我们约这个？",
+  "privateAdvice": "Move from vague interest to a concrete plan. Suggest a specific time.",
+  "suggestedMessage": "那我们定今晚 7 点左右，在 Waterloo 附近看电影？你方便吗？",
   "safetyNote": null
 }`}
         />
@@ -130,11 +240,12 @@ export default function Docs() {
           title="Pixie Auto Context API"
           endpoint="pixie.autoContext"
           method="mutation"
-          description="自动分析聊天上下文，判断 Lumi 是否应当发言、以什么方式发言、以及建议的后续动作。"
+          description="自动分析聊天上下文，判断 Pixie 是否应当发言、以什么方式发言、以及建议的后续动作。"
           requestFields={[
             { name: "roomId", type: "string", desc: "聊天房间 ID" },
             { name: "userId", type: "string", desc: "当前用户 ID" },
             { name: "pixieId", type: "string", desc: "小精灵 ID，默认 'lumi'" },
+            { name: "persona", type: "enum", desc: "人格选择（默认 sassy_roast_bestie）" },
             { name: "chatContext", type: "array", desc: "聊天上下文消息数组" },
             { name: "activityIntent", type: "object?", desc: "可选的活动意图 { activity, area, time }" },
           ]}
@@ -142,7 +253,7 @@ export default function Docs() {
             { name: "shouldSpeak", type: "boolean", desc: "是否应该发言" },
             { name: "visibility", type: "enum", desc: "private | public" },
             { name: "triggerReason", type: "string", desc: "发言原因" },
-            { name: "pixieMessage", type: "string", desc: "Lumi 要说的话" },
+            { name: "pixieMessage", type: "string", desc: "Pixie 要说的话" },
             { name: "suggestedAction", type: "enum", desc: "icebreaker | rewrite | boundary | plan | safety | none" },
             { name: "riskLevel", type: "enum", desc: "low | medium | high" },
           ]}
@@ -150,47 +261,78 @@ export default function Docs() {
   "roomId": "room-abc",
   "userId": "jiaYi",
   "pixieId": "lumi",
+  "persona": "sassy_roast_bestie",
   "chatContext": [
     { "senderName": "Alice", "senderType": "human", "content": "今晚有人想看电影吗？" },
-    { "senderName": "JiaYi", "senderType": "human", "content": "我也想看！" },
-    { "senderName": "Alice", "senderType": "human", "content": "轻松一点的吧，不要恐怖片" }
+    { "senderName": "JiaYi", "senderType": "human", "content": "我也想看！" }
   ],
-  "activityIntent": {
-    "activity": "watch a movie",
-    "area": "Waterloo",
-    "time": "tonight"
-  }
+  "activityIntent": { "activity": "watch a movie", "area": "Waterloo", "time": "tonight" }
 }`}
           exampleResponse={`{
   "shouldSpeak": true,
   "visibility": "public",
   "triggerReason": "活动意图明确但缺少具体时间和地点",
-  "pixieMessage": "看起来你们都想看电影！要不要我帮忙查一下 Waterloo 附近今晚有什么好片？",
+  "pixieMessage": "你们都想看电影但没人定时间，来，把计划钉住。",
   "suggestedAction": "plan",
   "riskLevel": "low"
 }`}
         />
 
-        {/* Lumi Persona */}
+        {/* Safety Boundaries */}
         <section className="cosmic-card rounded-xl p-8">
-          <h2 className="text-2xl font-bold text-foreground mb-4">Lumi 人设说明</h2>
-          <div className="space-y-4 text-muted-foreground leading-relaxed">
-            <p>
-              <strong className="text-foreground">性格定位：</strong>毒舌但靠谱的社交副驾驶。像用户最好的朋友——懂他们、帮他们、偶尔损他们。
-            </p>
-            <p>
-              <strong className="text-foreground">安全优先原则：</strong>涉及线下见面、私人联系方式、深夜约见、对方冒犯越界时，
-              Lumi 必须优先给出安全提醒。安全提醒的优先级高于所有其他回复逻辑。
-            </p>
-            <p>
-              <strong className="text-foreground">核心原则：</strong>
-            </p>
-            <ul className="list-disc list-inside space-y-1 ml-4">
-              <li>帮助用户更好地表达自己，但不替用户说话</li>
-              <li>可以毒舌，但绝不鼓励攻击、骚扰、操控或不安全行为</li>
-              <li>当 riskLevel 为 high 时，优先输出降温和安全建议</li>
-              <li>私下提醒优先于公开插话</li>
-            </ul>
+          <h2 className="text-2xl font-bold text-foreground mb-4">安全边界规则</h2>
+          <p className="text-muted-foreground leading-relaxed mb-4">
+            以下安全规则适用于所有人格，优先级高于人格个性表达：
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {[
+              "不替代用户发言或冒充用户",
+              "不鼓励骚扰、威胁、辱骂或操控",
+              "不帮助 PUA、冷暴力或制造焦虑",
+              "不替用户承诺线下见面",
+              "线下见面必须提醒公共场所 + 退出空间",
+              "不攻击身份、身体、种族、性别等",
+              "公开发言必须表明 Pixie 身份",
+              "high risk 场景优先安全，不鼓励发送",
+            ].map((rule) => (
+              <div key={rule} className="flex items-start gap-2 p-2 rounded-lg bg-destructive/5 border border-destructive/15">
+                <span className="text-destructive text-xs mt-0.5">●</span>
+                <span className="text-sm text-muted-foreground">{rule}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Risk Levels */}
+        <section className="cosmic-card rounded-xl p-8">
+          <h2 className="text-2xl font-bold text-foreground mb-4">风险等级说明</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border/50">
+                  <th className="text-left py-3 px-4 text-muted-foreground font-medium">等级</th>
+                  <th className="text-left py-3 px-4 text-muted-foreground font-medium">场景</th>
+                  <th className="text-left py-3 px-4 text-muted-foreground font-medium">Pixie 行为</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b border-border/30">
+                  <td className="py-3 px-4"><span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-500/15 text-green-400 border border-green-500/25">low</span></td>
+                  <td className="py-3 px-4 text-muted-foreground">正常社交场景</td>
+                  <td className="py-3 px-4 text-muted-foreground">自由给出建议</td>
+                </tr>
+                <tr className="border-b border-border/30">
+                  <td className="py-3 px-4"><span className="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-500/15 text-yellow-400 border border-yellow-500/25">medium</span></td>
+                  <td className="py-3 px-4 text-muted-foreground">边界问题、轻微冒犯、情绪升级</td>
+                  <td className="py-3 px-4 text-muted-foreground">降温、给出礼貌表达</td>
+                </tr>
+                <tr className="border-b border-border/30">
+                  <td className="py-3 px-4"><span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/15 text-red-400 border border-red-500/25">high</span></td>
+                  <td className="py-3 px-4 text-muted-foreground">威胁、骚扰、隐私风险、危险约见</td>
+                  <td className="py-3 px-4 text-muted-foreground">安全优先，不鼓励发送</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </section>
       </main>
@@ -200,13 +342,12 @@ export default function Docs() {
 
 /* ─── API Section Component ────────────────────────────────── */
 
-function ApiSection({ icon, title, endpoint, method, description, modes, requestFields, responseFields, example, exampleResponse }: {
+function ApiSection({ icon, title, endpoint, method, description, requestFields, responseFields, example, exampleResponse }: {
   icon: React.ReactNode;
   title: string;
   endpoint: string;
   method: string;
   description: string;
-  modes?: Array<{ name: string; desc: string }>;
   requestFields: Array<{ name: string; type: string; desc: string }>;
   responseFields: Array<{ name: string; type: string; desc: string }>;
   example: string;
@@ -227,20 +368,6 @@ function ApiSection({ icon, title, endpoint, method, description, modes, request
       </div>
 
       <p className="text-muted-foreground leading-relaxed">{description}</p>
-
-      {modes && (
-        <div>
-          <h4 className="text-sm font-semibold text-foreground mb-2">模式说明</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {modes.map((m) => (
-              <div key={m.name} className="flex items-start gap-2 p-2 rounded-lg bg-secondary/30">
-                <code className="text-xs font-mono text-primary whitespace-nowrap">{m.name}</code>
-                <span className="text-xs text-muted-foreground">{m.desc}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Request fields */}
       <div>

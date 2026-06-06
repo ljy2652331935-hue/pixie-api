@@ -2,15 +2,19 @@
  * Pixie API Router
  * ────────────────
  * 三个核心端点：suggestion / chat / autoContext
+ * 支持 6 个人格 + 6 个模式的两层 prompt 组装系统
  */
 
 import { z } from "zod";
 import { publicProcedure, router } from "./_core/trpc";
 import { invokeLLM } from "./_core/llm";
 import {
-  SUGGESTION_SYSTEM_PROMPT,
-  CHAT_SYSTEM_PROMPT,
-  AUTO_CONTEXT_SYSTEM_PROMPT,
+  assembleSuggestionPrompt,
+  assembleChatPrompt,
+  assembleAutoContextPrompt,
+  PERSONA_LIST,
+  type PersonaId,
+  type ModeId,
 } from "./pixie-prompts";
 
 // ─── Shared schemas ────────────────────────────────────────
@@ -26,6 +30,17 @@ const activityIntentSchema = z.object({
   area: z.string(),
   time: z.string(),
 });
+
+const personaSchema = z.enum([
+  "sassy_roast_bestie",
+  "smooth_witty_fox",
+  "elegant_gentleman",
+  "loyal_bro",
+  "soft_social_anxiety_helper",
+  "calm_strategist",
+]);
+
+const suggestionModeSchema = z.enum(["icebreaker", "rewrite", "boundary", "plan"]);
 
 // ─── Helper: call LLM and parse JSON ──────────────────────
 
@@ -100,25 +115,36 @@ function buildAutoContextUserMessage(
 // ─── Router ───────────────────────────────────────────────
 
 export const pixieRouter = router({
+  // Get available personas list
+  personas: publicProcedure.query(() => {
+    return PERSONA_LIST;
+  }),
+
   suggestion: publicProcedure
     .input(
       z.object({
         roomId: z.string(),
         userId: z.string(),
         pixieId: z.string().default("lumi"),
+        persona: personaSchema.default("sassy_roast_bestie"),
         rawMessage: z.string(),
-        mode: z.enum(["icebreaker", "rewrite", "boundary", "plan"]),
+        mode: suggestionModeSchema,
         chatContext: z.array(chatMessageSchema).default([]),
       })
     )
     .mutation(async ({ input }) => {
+      const systemPrompt = assembleSuggestionPrompt(
+        input.persona as PersonaId,
+        input.mode as ModeId
+      );
+
       const userMessage = buildSuggestionUserMessage(
         input.rawMessage,
         input.mode,
         input.chatContext
       );
 
-      const result = await callPixieLLM(SUGGESTION_SYSTEM_PROMPT, userMessage);
+      const result = await callPixieLLM(systemPrompt, userMessage);
 
       return {
         detectedIntent: result.detectedIntent as string,
@@ -136,17 +162,20 @@ export const pixieRouter = router({
         roomId: z.string(),
         userId: z.string(),
         pixieId: z.string().default("lumi"),
+        persona: personaSchema.default("sassy_roast_bestie"),
         privateQuestion: z.string(),
         chatContext: z.array(chatMessageSchema).default([]),
       })
     )
     .mutation(async ({ input }) => {
+      const systemPrompt = assembleChatPrompt(input.persona as PersonaId);
+
       const userMessage = buildChatUserMessage(
         input.privateQuestion,
         input.chatContext
       );
 
-      const result = await callPixieLLM(CHAT_SYSTEM_PROMPT, userMessage);
+      const result = await callPixieLLM(systemPrompt, userMessage);
 
       return {
         privateAdvice: result.privateAdvice as string,
@@ -161,17 +190,20 @@ export const pixieRouter = router({
         roomId: z.string(),
         userId: z.string(),
         pixieId: z.string().default("lumi"),
+        persona: personaSchema.default("sassy_roast_bestie"),
         chatContext: z.array(chatMessageSchema).default([]),
         activityIntent: activityIntentSchema.optional(),
       })
     )
     .mutation(async ({ input }) => {
+      const systemPrompt = assembleAutoContextPrompt(input.persona as PersonaId);
+
       const userMessage = buildAutoContextUserMessage(
         input.chatContext,
         input.activityIntent
       );
 
-      const result = await callPixieLLM(AUTO_CONTEXT_SYSTEM_PROMPT, userMessage);
+      const result = await callPixieLLM(systemPrompt, userMessage);
 
       return {
         shouldSpeak: result.shouldSpeak as boolean,

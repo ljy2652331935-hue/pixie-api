@@ -1,10 +1,58 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "wouter";
-import { Sparkles, MessageCircle, Eye, ArrowLeft, Loader2, Send, Copy, Check, Code } from "lucide-react";
+import { Sparkles, MessageCircle, Eye, ArrowLeft, Loader2, Send, Copy, Check, Code, Users } from "lucide-react";
+import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+
+// ─── Persona definitions (matches server) ─────────────────────
+
+const PERSONAS = [
+  { id: "sassy_roast_bestie", name: "Lumi", label: "毒舌吐槽闺蜜", emoji: "🔥" },
+  { id: "smooth_witty_fox", name: "Lumi", label: "机灵狐狸军师", emoji: "🦊" },
+  { id: "elegant_gentleman", name: "Soren", label: "优雅绅士", emoji: "🎩" },
+  { id: "loyal_bro", name: "Koda", label: "兄弟护短", emoji: "🤝" },
+  { id: "soft_social_anxiety_helper", name: "Mimi", label: "温柔社恐辅助", emoji: "🌸" },
+  { id: "calm_strategist", name: "Orin", label: "冷静理性军师", emoji: "🧊" },
+] as const;
+
+type PersonaId = (typeof PERSONAS)[number]["id"];
+
+// ─── Persona Selector Component ───────────────────────────────
+
+function PersonaSelector({ value, onChange }: { value: PersonaId; onChange: (v: PersonaId) => void }) {
+  const selected = PERSONAS.find(p => p.id === value);
+  return (
+    <div>
+      <label className="text-sm text-muted-foreground mb-1 block flex items-center gap-1">
+        <Users className="w-3.5 h-3.5" />
+        人格 (persona)
+      </label>
+      <Select value={value} onValueChange={(v) => onChange(v as PersonaId)}>
+        <SelectTrigger className="w-full bg-input border-border/50 text-foreground">
+          <SelectValue>
+            {selected && `${selected.emoji} ${selected.name} — ${selected.label}`}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent className="bg-popover border-border">
+          {PERSONAS.map((p) => (
+            <SelectItem key={p.id} value={p.id}>
+              <span className="flex items-center gap-2">
+                <span>{p.emoji}</span>
+                <span className="font-medium">{p.name}</span>
+                <span className="text-muted-foreground text-xs">— {p.label}</span>
+              </span>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────
 
 export default function Playground() {
   return (
@@ -63,6 +111,7 @@ export default function Playground() {
 /* ─── Suggestion Panel ─────────────────────────────────────── */
 
 function SuggestionPanel() {
+  const [persona, setPersona] = useState<PersonaId>("sassy_roast_bestie");
   const [rawMessage, setRawMessage] = useState("我想约她看电影，但不想尴尬。");
   const [mode, setMode] = useState<"icebreaker" | "rewrite" | "boundary" | "plan">("icebreaker");
   const [contextInput, setContextInput] = useState("Alice: 今晚有人想看电影吗？");
@@ -73,6 +122,16 @@ function SuggestionPanel() {
   });
 
   const handleSubmit = () => {
+    if (!rawMessage.trim()) {
+      toast.error("请输入用户原始消息");
+      return;
+    }
+    const contextErr = validateContextLines(contextInput);
+    if (contextErr) {
+      toast.error(contextErr);
+      return;
+    }
+
     const chatContext = contextInput
       .split("\n")
       .filter(Boolean)
@@ -85,20 +144,11 @@ function SuggestionPanel() {
         };
       });
 
-    if (!rawMessage.trim()) {
-      toast.error("请输入用户原始消息");
-      return;
-    }
-    const contextErr = validateContextLines(contextInput);
-    if (contextErr) {
-      toast.error(contextErr);
-      return;
-    }
-
     mutation.mutate({
       roomId: "playground-room",
       userId: "testUser",
       pixieId: "lumi",
+      persona,
       rawMessage,
       mode,
       chatContext,
@@ -115,6 +165,8 @@ function SuggestionPanel() {
         </h3>
 
         <div className="space-y-4">
+          <PersonaSelector value={persona} onChange={setPersona} />
+
           <div>
             <label className="text-sm text-muted-foreground mb-1 block">模式 (mode)</label>
             <div className="grid grid-cols-2 gap-2">
@@ -175,7 +227,7 @@ function SuggestionPanel() {
         {mutation.isPending && (
           <div className="flex items-center justify-center h-48 text-muted-foreground">
             <Loader2 className="w-6 h-6 animate-spin mr-2" />
-            Lumi 正在思考...
+            {PERSONAS.find(p => p.id === persona)?.name} 正在思考...
           </div>
         )}
         {mutation.error && (
@@ -198,7 +250,7 @@ function SuggestionPanel() {
         )}
         {!result && !mutation.isPending && !mutation.error && (
           <div className="flex items-center justify-center h-48 text-muted-foreground/60 text-sm">
-            点击"发送请求"查看 Lumi 的回复
+            点击"发送请求"查看回复
           </div>
         )}
       </div>
@@ -209,6 +261,7 @@ function SuggestionPanel() {
 /* ─── Chat Panel ───────────────────────────────────────────── */
 
 function ChatPanel() {
+  const [persona, setPersona] = useState<PersonaId>("sassy_roast_bestie");
   const [privateQuestion, setPrivateQuestion] = useState("她说想去 Waterloo 看电影，我是不是该主动定时间？");
   const [contextInput, setContextInput] = useState("Alice: 那我们去 Waterloo 那边的影院？\nJiaYi: 好啊！");
   const [result, setResult] = useState<Record<string, unknown> | null>(null);
@@ -218,6 +271,16 @@ function ChatPanel() {
   });
 
   const handleSubmit = () => {
+    if (!privateQuestion.trim()) {
+      toast.error("请输入私下问题");
+      return;
+    }
+    const contextErr = validateContextLines(contextInput);
+    if (contextErr) {
+      toast.error(contextErr);
+      return;
+    }
+
     const chatContext = contextInput
       .split("\n")
       .filter(Boolean)
@@ -230,20 +293,11 @@ function ChatPanel() {
         };
       });
 
-    if (!privateQuestion.trim()) {
-      toast.error("请输入私下问题");
-      return;
-    }
-    const contextErr = validateContextLines(contextInput);
-    if (contextErr) {
-      toast.error(contextErr);
-      return;
-    }
-
     mutation.mutate({
       roomId: "playground-room",
       userId: "testUser",
       pixieId: "lumi",
+      persona,
       privateQuestion,
       chatContext,
     });
@@ -258,13 +312,15 @@ function ChatPanel() {
         </h3>
 
         <div className="space-y-4">
+          <PersonaSelector value={persona} onChange={setPersona} />
+
           <div>
             <label className="text-sm text-muted-foreground mb-1 block">私下问题 (privateQuestion)</label>
             <textarea
               value={privateQuestion}
               onChange={(e) => setPrivateQuestion(e.target.value)}
               className="w-full h-24 rounded-lg bg-input border border-border/50 px-3 py-2 text-sm text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
-              placeholder="私下问 Lumi 的问题..."
+              placeholder="私下问 Pixie 的问题..."
             />
           </div>
 
@@ -298,7 +354,7 @@ function ChatPanel() {
         {mutation.isPending && (
           <div className="flex items-center justify-center h-48 text-muted-foreground">
             <Loader2 className="w-6 h-6 animate-spin mr-2" />
-            Lumi 正在思考...
+            {PERSONAS.find(p => p.id === persona)?.name} 正在思考...
           </div>
         )}
         {mutation.error && (
@@ -306,7 +362,7 @@ function ChatPanel() {
             {mutation.error.message}
           </div>
         )}
-                {result && !mutation.isPending && (
+        {result && !mutation.isPending && (
           <div className="space-y-4">
             <div className="space-y-3">
               <ResponseField label="privateAdvice" value={result.privateAdvice as string} highlight />
@@ -318,7 +374,7 @@ function ChatPanel() {
         )}
         {!result && !mutation.isPending && !mutation.error && (
           <div className="flex items-center justify-center h-48 text-muted-foreground/60 text-sm">
-            点击“发送请求”查看 Lumi 的回复
+            点击"发送请求"查看回复
           </div>
         )}
       </div>
@@ -329,6 +385,7 @@ function ChatPanel() {
 /* ─── Auto Context Panel ───────────────────────────────────── */
 
 function AutoContextPanel() {
+  const [persona, setPersona] = useState<PersonaId>("sassy_roast_bestie");
   const [contextInput, setContextInput] = useState(
     "Alice: 今晚有人想看电影吗？\nJiaYi: 我也想看！\nAlice: 轻松一点的吧，不要恐怖片\nJiaYi: 好的没问题"
   );
@@ -342,6 +399,16 @@ function AutoContextPanel() {
   });
 
   const handleSubmit = () => {
+    if (!contextInput.trim()) {
+      toast.error("请输入至少一条聊天上下文");
+      return;
+    }
+    const contextErr = validateContextLines(contextInput);
+    if (contextErr) {
+      toast.error(contextErr);
+      return;
+    }
+
     const chatContext = contextInput
       .split("\n")
       .filter(Boolean)
@@ -354,20 +421,11 @@ function AutoContextPanel() {
         };
       });
 
-    if (!contextInput.trim()) {
-      toast.error("请输入至少一条聊天上下文");
-      return;
-    }
-    const contextErr = validateContextLines(contextInput);
-    if (contextErr) {
-      toast.error(contextErr);
-      return;
-    }
-
     mutation.mutate({
       roomId: "playground-room",
       userId: "testUser",
       pixieId: "lumi",
+      persona,
       chatContext,
       activityIntent: activity ? { activity, area, time } : undefined,
     });
@@ -382,6 +440,8 @@ function AutoContextPanel() {
         </h3>
 
         <div className="space-y-4">
+          <PersonaSelector value={persona} onChange={setPersona} />
+
           <div>
             <label className="text-sm text-muted-foreground mb-1 block">聊天上下文 (每行一条: 名字: 内容)</label>
             <textarea
@@ -436,7 +496,7 @@ function AutoContextPanel() {
         {mutation.isPending && (
           <div className="flex items-center justify-center h-48 text-muted-foreground">
             <Loader2 className="w-6 h-6 animate-spin mr-2" />
-            Lumi 正在读取房间...
+            {PERSONAS.find(p => p.id === persona)?.name} 正在读取房间...
           </div>
         )}
         {mutation.error && (
@@ -459,7 +519,7 @@ function AutoContextPanel() {
         )}
         {!result && !mutation.isPending && !mutation.error && (
           <div className="flex items-center justify-center h-48 text-muted-foreground/60 text-sm">
-            点击"发送请求"查看 Lumi 的分析
+            点击"发送请求"查看分析
           </div>
         )}
       </div>

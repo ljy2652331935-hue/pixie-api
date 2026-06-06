@@ -26,3 +26,14 @@
 - [x] 为首页补充镜头光晕 lens flare 视觉效果
 - [x] 为 Playground 增加格式化 JSON 响应查看器
 - [x] 为三个测试面板添加基础表单校验
+
+## Persona System 整合
+- [x] 后端实现 6 个 Persona 的 system prompt 定义（Sassy Roast Bestie / Smooth Witty Fox / Elegant Gentleman / Loyal Bro / Soft Social Anxiety Helper / Calm Strategist）
+- [x] 后端实现 6 个 Mode 的 prompt 模板（icebreaker / rewrite / boundary / plan / whisper / offline_profile）
+- [x] 后端实现两层 prompt 组装逻辑（Base + Persona + Mode + Few-shot）
+- [x] 后端 API 接口增加 persona 参数选择
+- [x] 后端安全边界规则统一注入所有 persona
+- [x] 前端 Playground 添加人格选择器
+- [x] 前端 Playground 支持 whisper 和 offline_profile 模式
+- [x] 前端 API 文档页展示完整人格与模式信息
+- [x] 修复 Docs 页面导入错误
