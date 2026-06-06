@@ -12,9 +12,11 @@ import {
   assembleSuggestionPrompt,
   assembleChatPrompt,
   assembleAutoContextPrompt,
+  assembleExpressPrompt,
   PERSONA_LIST,
   type PersonaId,
   type ModeId,
+  type ExpressModeId,
 } from "./pixie-prompts";
 
 // ─── Shared schemas ────────────────────────────────────────
@@ -41,6 +43,25 @@ const personaSchema = z.enum([
 ]);
 
 const suggestionModeSchema = z.enum(["icebreaker", "rewrite", "boundary", "plan", "whisper", "offline_profile"]);
+
+const expressModeSchema = z.enum(["compliment", "flirt", "invite", "rewrite", "boundary", "reject", "plan", "clarify", "casual"]);
+
+const targetUserSchema = z.object({
+  name: z.string(),
+  relationshipStage: z.enum(["new_match", "casual_chat", "friend", "dating_interest", "unknown"]).default("unknown"),
+});
+
+const userVoiceProfileSchema = z.object({
+  tone: z.array(z.string()).default(["warm", "expressive"]),
+  messageLength: z.enum(["short", "medium", "long"]).default("short"),
+  formality: z.enum(["casual", "semi_casual", "formal"]).default("casual"),
+  humorStyle: z.string().default("light teasing, self-aware"),
+  commonPhrases: z.array(z.string()).default([]),
+  avoidPhrases: z.array(z.string()).default(["too formal", "too sexual", "too desperate", "too AI-like"]),
+  flirtingStyle: z.string().default("low-pressure, sincere, not sexualized"),
+  conflictStyle: z.string().default("avoidant at first, needs help setting boundaries"),
+  socialWeaknesses: z.array(z.string()).default([]),
+});
 
 // ─── Bubbles response type ───────────────────────────────────
 
@@ -147,6 +168,53 @@ function buildAutoContextUserMessage(
   return `${context}${intent}\n\n请分析当前聊天状态，判断是否需要发言以及如何发言。`;
 }
 
+// ─── Build Express user message ─────────────────────────────
+
+function buildExpressUserMessage(input: {
+  rawMessage: string;
+  mode: string;
+  targetUser?: { name: string; relationshipStage: string };
+  activityIntent?: { activity: string; area: string; time: string };
+  chatContext: Array<{ senderName: string; content: string }>;
+  userVoiceProfile?: {
+    tone: string[];
+    messageLength: string;
+    formality: string;
+    humorStyle: string;
+    commonPhrases: string[];
+    avoidPhrases: string[];
+    flirtingStyle: string;
+    conflictStyle: string;
+    socialWeaknesses: string[];
+  };
+}): string {
+  const parts: string[] = [];
+
+  parts.push(`## Mode\n${input.mode}`);
+  parts.push(`## User's Raw Message\n${input.rawMessage}`);
+
+  if (input.targetUser) {
+    parts.push(`## Target User\n- Name: ${input.targetUser.name}\n- Relationship Stage: ${input.targetUser.relationshipStage}`);
+  }
+
+  if (input.activityIntent) {
+    parts.push(`## Activity Intent\n- Activity: ${input.activityIntent.activity}\n- Area: ${input.activityIntent.area}\n- Time: ${input.activityIntent.time}`);
+  }
+
+  if (input.chatContext.length > 0) {
+    parts.push(`## Chat Context\n` + input.chatContext.map(m => `- ${m.senderName}: ${m.content}`).join("\n"));
+  }
+
+  if (input.userVoiceProfile) {
+    const vp = input.userVoiceProfile;
+    parts.push(`## User Voice Profile\n- Tone: ${vp.tone.join(", ")}\n- Message Length: ${vp.messageLength}\n- Formality: ${vp.formality}\n- Humor Style: ${vp.humorStyle}\n- Common Phrases: ${vp.commonPhrases.join(", ") || "none specified"}\n- Avoid Phrases: ${vp.avoidPhrases.join(", ")}\n- Flirting Style: ${vp.flirtingStyle}\n- Conflict Style: ${vp.conflictStyle}\n- Social Weaknesses: ${vp.socialWeaknesses.join(", ") || "none specified"}`);
+  }
+
+  parts.push(`\nAnalyze the user's raw message through the five-layer analysis (Surface Message → True Intent → Emotion State → Social Risk → User Voice) and generate the response.`);
+
+  return parts.join("\n\n");
+}
+
 // ─── Router ───────────────────────────────────────────────
 
 export const pixieRouter = router({
@@ -224,5 +292,84 @@ export const pixieRouter = router({
       );
 
       return await callPixieLLM(systemPrompt, userMessage);
+    }),
+
+  // ─── Express API (Intent-to-Expression) ─────────────────────
+  express: publicProcedure
+    .input(
+      z.object({
+        roomId: z.string(),
+        userId: z.string(),
+        pixieId: z.string().default("lumi"),
+        persona: personaSchema.default("sassy_roast_bestie"),
+        rawMessage: z.string(),
+        mode: expressModeSchema,
+        targetUser: targetUserSchema.optional(),
+        activityIntent: activityIntentSchema.optional(),
+        chatContext: z.array(chatMessageSchema).default([]),
+        userVoiceProfile: userVoiceProfileSchema.optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const systemPrompt = assembleExpressPrompt(
+        input.persona as PersonaId,
+        input.mode as ExpressModeId
+      );
+
+      const userMessage = buildExpressUserMessage(input);
+
+      const result = await invokeLLM({
+        model: "gpt-5-mini",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userMessage },
+        ],
+        max_tokens: 2048,
+      });
+
+      const raw = result.choices[0]?.message?.content;
+      if (!raw || typeof raw !== "string") {
+        throw new Error("LLM returned empty content");
+      }
+
+      let cleaned = raw.trim();
+      if (cleaned.startsWith("```")) {
+        cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, "").replace(/\n?```\s*$/, "");
+      }
+
+      let parsed: any;
+      try {
+        parsed = JSON.parse(cleaned);
+      } catch {
+        // Fallback if LLM returns malformed JSON
+        return {
+          detectedIntent: "Unable to parse - raw response received",
+          emotionDetected: [],
+          riskFlags: [],
+          rewriteStrategy: "",
+          privateBubbles: [{ type: "advice" as const, text: cleaned.slice(0, 200), emotion: "neutral" as const, delayMs: 0 }],
+          suggestedPublicMessage: "",
+          userVoiceMatch: 0,
+          riskLevel: "low" as const,
+          confidence: 0,
+        };
+      }
+
+      return {
+        detectedIntent: typeof parsed.detectedIntent === "string" ? parsed.detectedIntent : "",
+        emotionDetected: Array.isArray(parsed.emotionDetected) ? parsed.emotionDetected.filter((e: any) => typeof e === "string") : [],
+        riskFlags: Array.isArray(parsed.riskFlags) ? parsed.riskFlags.filter((f: any) => typeof f === "string") : [],
+        rewriteStrategy: typeof parsed.rewriteStrategy === "string" ? parsed.rewriteStrategy : "",
+        privateBubbles: Array.isArray(parsed.privateBubbles) ? parsed.privateBubbles.map((b: any) => ({
+          type: ["reaction", "roast", "advice", "warning", "question"].includes(b.type) ? b.type : "advice",
+          text: typeof b.text === "string" ? b.text : "",
+          emotion: ["neutral", "playful", "worried", "smug", "serious", "excited"].includes(b.emotion) ? b.emotion : "neutral",
+          delayMs: typeof b.delayMs === "number" ? b.delayMs : 0,
+        })) : [],
+        suggestedPublicMessage: typeof parsed.suggestedPublicMessage === "string" ? parsed.suggestedPublicMessage : "",
+        userVoiceMatch: typeof parsed.userVoiceMatch === "number" ? Math.min(1, Math.max(0, parsed.userVoiceMatch)) : 0.8,
+        riskLevel: ["low", "medium", "high"].includes(parsed.riskLevel) ? parsed.riskLevel : "low",
+        confidence: typeof parsed.confidence === "number" ? Math.min(1, Math.max(0, parsed.confidence)) : 0.8,
+      };
     }),
 });

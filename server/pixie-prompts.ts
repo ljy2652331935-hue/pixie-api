@@ -26,6 +26,17 @@ export type ModeId =
   | "whisper"
   | "offline_profile";
 
+export type ExpressModeId =
+  | "compliment"
+  | "flirt"
+  | "invite"
+  | "rewrite"
+  | "boundary"
+  | "reject"
+  | "plan"
+  | "clarify"
+  | "casual";
+
 // ─── Persona Metadata (for frontend display) ─────────────────
 
 export interface PersonaMeta {
@@ -310,6 +321,114 @@ export function assembleAutoContextPrompt(persona: PersonaId): string {
 - User expression might be misunderstood → private rewrite
 - Other party offensive or crossing boundary → private boundary
 - Offline meetup, privacy, platform switch → private safety`,
+  ].join("\n\n");
+}
+
+// ─── Express API Prompt ──────────────────────────────────────
+
+const EXPRESS_MODE_PROMPTS: Record<ExpressModeId, string> = {
+  compliment: `## Mode: Compliment
+Help the user give a respectful compliment.
+Prefer complimenting: style, outfit, energy, taste, vibe, effort, humor, personality.
+Avoid: body-focused compliments, sexual comments, overly intense praise, comments that create pressure.
+If the user's original message is too sexual or body-focused → flag risk, rewrite to compliment vibe/style instead.`,
+
+  flirt: `## Mode: Flirt
+Make it light, low-pressure, and non-creepy.
+The goal is playful interest, not pressure.
+If the message is too intense or too early → flag risk, tone it down.
+Keep it sincere, not manipulative. Never PUA.`,
+
+  invite: `## Mode: Invite
+Help the user invite someone without sounding desperate or pressuring.
+Make the invitation easy to decline gracefully.
+Include: activity + time + place suggestion.
+If first meetup → suggest public place, reasonable time.`,
+
+  rewrite: `## Mode: Rewrite
+The user has something they want to say but it sounds wrong — too aggressive, too cold, too awkward, or too eager.
+Rewrite to be natural, clear, and appropriate for the social context.
+Keep the original intent. Don't change the meaning. Don't make it sound fake.`,
+
+  boundary: `## Mode: Boundary
+Help user express discomfort firmly without insulting.
+Firm but not aggressive. Clear but not cruel.
+Dignified exit or de-escalation.
+Never escalate into attack. Never encourage insults or threats.`,
+
+  reject: `## Mode: Reject
+Help user say no clearly and kindly.
+The rejection should be: clear, not cruel, not leaving false hope, respectful.
+Don't ghost — give a clean exit. Don't over-explain or apologize excessively.`,
+
+  plan: `## Mode: Plan
+Turn vague chat into a clear meetup plan.
+Formula: Activity + Time + Place + Confirmation question.
+Include safety where relevant (public place for first meetup).
+Don't commit on behalf of user. Leave space for the other person to adjust.`,
+
+  clarify: `## Mode: Clarify
+The user's intent is unclear. Do not guess too much.
+Ask a short clarifying question to understand what they really want.
+Use responseStyle "clarify" with quickReplies options.
+Keep it light and non-judgmental.`,
+
+  casual: `## Mode: Casual
+Make messages sound natural, short, and human.
+Avoid polished AI language. Keep it conversational.
+The goal is: sound like a real person texting, not a corporate email.`,
+};
+
+const EXPRESS_OUTPUT_SCHEMA = `## Output Format
+Return ONLY valid JSON with exactly these fields (no markdown, no explanation, no extra fields):
+{
+  "detectedIntent": "string (what the user is actually trying to express, 1 sentence)",
+  "emotionDetected": ["string"] (user's current emotions, e.g. nervous, excited, interested, anxious, frustrated),
+  "riskFlags": ["string"] (social risks detected, e.g. too_sexual, too_desperate, too_pushy, too_cold, too_aggressive, too_needy, too_formal, too_generic, too_ai_like, too_long, too_intense, privacy_risk, offline_safety_risk, may_objectify_other_person, may_create_pressure, may_sound_controlling — empty array if no risks),
+  "rewriteStrategy": "string (1 sentence explaining how you will improve the message)",
+  "privateBubbles": [
+    {
+      "type": "reaction | roast | advice | warning | question",
+      "text": "string (short, natural, max 30 words per bubble)",
+      "emotion": "neutral | playful | worried | smug | serious | excited",
+      "delayMs": number (0 for first bubble, 600-1600 for subsequent)
+    }
+  ],
+  "suggestedPublicMessage": "string (a message the user can send publicly — natural, short, safe, not AI-like, close to user's voice)",
+  "userVoiceMatch": number (0.0 to 1.0, how well the suggested message matches the user's voice profile),
+  "riskLevel": "low | medium | high",
+  "confidence": number (0.0 to 1.0)
+}
+
+## Field Rules
+- detectedIntent: What the user truly means, not what they literally wrote.
+- emotionDetected: 1-3 emotions the user is likely feeling.
+- riskFlags: Social risks of the ORIGINAL message. Empty array if safe.
+- rewriteStrategy: Brief explanation of the rewrite approach.
+- privateBubbles: What the Pixie privately says to the user (sassy, honest, personality-rich). 1-5 bubbles.
+- suggestedPublicMessage: The improved message the user can send. Must sound like the user, not like AI.
+- userVoiceMatch: How well the suggestion matches the user's natural voice (consider their tone, formality, humor style).
+- riskLevel: Overall risk assessment of the situation.
+- confidence: How confident you are in the suggestion.
+- Do not output markdown. Do not output explanations outside JSON. Do not add extra fields.
+`;
+
+export function assembleExpressPrompt(persona: PersonaId, mode: ExpressModeId): string {
+  return [
+    BASE_SYSTEM_PROMPT,
+    CONVERSATION_REALISM_PROMPT,
+    PERSONA_PROMPTS[persona],
+    EXPRESS_MODE_PROMPTS[mode],
+    `## Five-Layer Analysis (internal reasoning)
+Before generating output, internally analyze:
+1. Surface Message: What did the user literally write?
+2. True Intent: What is the user actually trying to express?
+3. Emotion State: What is the user feeling right now?
+4. Social Risk: How might the original message land on the other person?
+5. User Voice: How can the better message still sound like the user?
+
+The output should not sound like a perfect corporate message. It should sound like the user, but clearer, safer, and more socially aware.`,
+    EXPRESS_OUTPUT_SCHEMA,
   ].join("\n\n");
 }
 

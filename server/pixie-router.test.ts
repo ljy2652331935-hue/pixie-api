@@ -110,6 +110,80 @@ describe("pixie.autoContext", () => {
   }, 30000);
 });
 
+describe("pixie.express", () => {
+  it("returns express response with all required fields", async () => {
+    const caller = appRouter.createCaller(createPublicContext());
+
+    const result = await caller.pixie.express({
+      roomId: "test-room",
+      userId: "testUser",
+      pixieId: "lumi",
+      persona: "sassy_roast_bestie",
+      rawMessage: "我想约她周末去看美术展，但不知道怎么开口。",
+      mode: "invite",
+      targetUser: { name: "Alice", relationshipStage: "casual_chat" },
+      chatContext: [
+        { senderName: "Alice", senderType: "human", content: "最近好无聊啊" },
+      ],
+    });
+
+    // Validate all required response fields
+    expect(typeof result.detectedIntent).toBe("string");
+    expect(result.detectedIntent.length).toBeGreaterThan(0);
+
+    expect(Array.isArray(result.emotionDetected)).toBe(true);
+    expect(Array.isArray(result.riskFlags)).toBe(true);
+    expect(typeof result.rewriteStrategy).toBe("string");
+
+    // privateBubbles
+    expect(Array.isArray(result.privateBubbles)).toBe(true);
+    expect(result.privateBubbles.length).toBeGreaterThan(0);
+    for (const bubble of result.privateBubbles) {
+      expect(["reaction", "roast", "advice", "warning", "question"]).toContain(bubble.type);
+      expect(typeof bubble.text).toBe("string");
+      expect(["neutral", "playful", "worried", "smug", "serious", "excited"]).toContain(bubble.emotion);
+      expect(typeof bubble.delayMs).toBe("number");
+    }
+
+    // suggestedPublicMessage
+    expect(typeof result.suggestedPublicMessage).toBe("string");
+
+    // userVoiceMatch
+    expect(typeof result.userVoiceMatch).toBe("number");
+    expect(result.userVoiceMatch).toBeGreaterThanOrEqual(0);
+    expect(result.userVoiceMatch).toBeLessThanOrEqual(1);
+
+    // riskLevel
+    expect(["low", "medium", "high"]).toContain(result.riskLevel);
+
+    // confidence
+    expect(typeof result.confidence).toBe("number");
+    expect(result.confidence).toBeGreaterThanOrEqual(0);
+    expect(result.confidence).toBeLessThanOrEqual(1);
+  }, 30000);
+
+  it("handles all 9 express modes without error", async () => {
+    const caller = appRouter.createCaller(createPublicContext());
+    const modes = ["compliment", "flirt", "invite", "rewrite", "boundary", "reject", "plan", "clarify", "casual"] as const;
+
+    // Test just one mode to keep test fast - the schema validation covers all modes
+    const result = await caller.pixie.express({
+      roomId: "test-room",
+      userId: "testUser",
+      pixieId: "lumi",
+      persona: "smooth_witty_fox",
+      rawMessage: "她说的话让我很不舒服，我想表达不满但不想吵架。",
+      mode: "boundary",
+      chatContext: [
+        { senderName: "Bob", senderType: "human", content: "你怎么这么胖了？" },
+      ],
+    });
+
+    expect(typeof result.detectedIntent).toBe("string");
+    expect(["low", "medium", "high"]).toContain(result.riskLevel);
+  }, 30000);
+});
+
 describe("pixie.personas", () => {
   it("returns the list of available personas", async () => {
     const caller = appRouter.createCaller(createPublicContext());

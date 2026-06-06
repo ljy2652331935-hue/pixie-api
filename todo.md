@@ -47,3 +47,13 @@
 - [x] 前端 quickReplies 渲染为可点击 chips
 - [x] 前端 interrupt 样式显示为紧急但不吓人
 - [x] 前端根据 visibility 区分渲染位置（private / public_suggestion / public_pixie）
+
+## Pixie Express API 升级 (原 Suggestion API)
+- [x] 后端新增 pixie.express 端点，支持 9 种模式（compliment / flirt / invite / rewrite / boundary / reject / plan / clarify / casual）
+- [x] 后端新增 targetUser 参数（name + relationshipStage）
+- [x] 后端新增 userVoiceProfile 参数（tone / messageLength / formality / humorStyle / commonPhrases / avoidPhrases / flirtingStyle / conflictStyle / socialWeaknesses）
+- [x] 后端新增响应字段：detectedIntent / emotionDetected / riskFlags / rewriteStrategy / privateBubbles / suggestedPublicMessage / userVoiceMatch / riskLevel / confidence
+- [x] 后端 Express prompt 注入五层分析逻辑（Surface Message / True Intent / Emotion State / Social Risk / User Voice）
+- [x] 前端 Playground 新增 Express 面板，支持 targetUser 和 userVoiceProfile 输入
+- [x] 前端 Express 面板显示 privateBubbles 气泡动画 + suggestedPublicMessage 卡片 + riskFlags 标签
+- [x] 更新测试覆盖 Express API 新字段
