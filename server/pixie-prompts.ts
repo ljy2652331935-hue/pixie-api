@@ -37,6 +37,9 @@ export type ExpressModeId =
   | "clarify"
   | "casual";
 
+// Unified suggest mode — LLM auto-detects which strategy to use
+export type SuggestDetectedMode = ExpressModeId | "icebreaker";
+
 // ─── Persona Metadata (for frontend display) ─────────────────
 
 export interface PersonaMeta {
@@ -299,6 +302,101 @@ export function assembleSuggestionPrompt(persona: PersonaId, mode: ModeId): stri
   ].join("\n\n");
 }
 
+// ─── Unified Suggest Prompt (auto-detect mode) ──────────────
+
+function buildSuggestAutoDetectPrompt(): string {
+  const modeGuidelines = [
+    `## Mode: Compliment\nHelp the user give a respectful compliment. Prefer complimenting: style, outfit, energy, taste, vibe, effort, humor, personality. Avoid: body-focused compliments, sexual comments, overly intense praise, comments that create pressure.`,
+    `## Mode: Flirt\nMake it light, low-pressure, and non-creepy. The goal is playful interest, not pressure. If the message is too intense or too early → flag risk, tone it down. Keep it sincere, not manipulative. Never PUA.`,
+    `## Mode: Invite\nHelp the user invite someone without sounding desperate or pressuring. Make the invitation easy to decline gracefully. Include: activity + time + place suggestion. If first meetup → suggest public place, reasonable time.`,
+    `## Mode: Rewrite\nThe user has something they want to say but it sounds wrong — too aggressive, too cold, too awkward, or too eager. Rewrite to be natural, clear, and appropriate for the social context. Keep the original intent.`,
+    `## Mode: Boundary\nHelp user express discomfort firmly without insulting. Firm but not aggressive. Clear but not cruel. Dignified exit or de-escalation. Never escalate into attack.`,
+    `## Mode: Reject\nHelp user say no clearly and kindly. The rejection should be: clear, not cruel, not leaving false hope, respectful. Don't ghost — give a clean exit.`,
+    `## Mode: Plan\nTurn vague chat into a clear meetup plan. Formula: Activity + Time + Place + Confirmation question. Include safety where relevant. Don't commit on behalf of user.`,
+    `## Mode: Clarify\nThe user's intent is unclear. Do not guess too much. Ask a short clarifying question to understand what they really want. Keep it light and non-judgmental.`,
+    `## Mode: Casual\nMake messages sound natural, short, and human. Avoid polished AI language. Keep it conversational. Sound like a real person texting, not a corporate email.`,
+    `## Mode: Icebreaker\nThe user doesn't know how to start a conversation. Help them break the ice with something natural, interesting, and low-pressure. Avoid generic openers.`,
+  ].join("\n\n");
+
+  return `## Mode: Auto-Detect (精灵建议)
+You are the user's social expression assistant. The user will give you their raw message or intention.
+You must internally determine what the user is trying to do based on context and content.
+
+Possible intent categories (you decide which one fits best):
+- compliment: user wants to praise someone
+- flirt: user wants to show romantic/playful interest
+- invite: user wants to ask someone to do something
+- rewrite: user has a message that sounds wrong and needs improvement
+- boundary: user wants to express discomfort or set limits
+- reject: user wants to say no clearly
+- plan: user wants to turn vague chat into a concrete plan
+- clarify: user's intent is unclear even to themselves
+- casual: user just wants to sound natural and human
+- icebreaker: user doesn't know how to start a conversation
+
+You do NOT ask the user which mode they want. You analyze and decide yourself.
+Output your decision in the "detectedMode" field.
+
+Mode-specific guidelines:
+${modeGuidelines}
+`;
+}
+
+const SUGGEST_OUTPUT_SCHEMA = `## Output Format
+Return ONLY valid JSON with exactly these fields (no markdown, no explanation, no extra fields):
+{
+  "detectedMode": "compliment | flirt | invite | rewrite | boundary | reject | plan | clarify | casual | icebreaker",
+  "detectedIntent": "string (what the user is actually trying to express, 1 sentence)",
+  "emotionDetected": ["string"] (user's current emotions, e.g. nervous, excited, interested, anxious, frustrated),
+  "riskFlags": ["string"] (social risks detected — empty array if no risks),
+  "rewriteStrategy": "string (1 sentence explaining how you will improve the message)",
+  "privateBubbles": [
+    {
+      "type": "reaction | roast | advice | warning | question",
+      "text": "string (short, natural, max 30 words per bubble)",
+      "emotion": "neutral | playful | worried | smug | serious | excited",
+      "delayMs": number (0 for first bubble, 600-1600 for subsequent)
+    }
+  ],
+  "suggestedPublicMessage": "string (a message the user can send publicly — natural, short, safe, not AI-like, close to user's voice)",
+  "userVoiceMatch": number (0.0 to 1.0, how well the suggested message matches the user's voice profile),
+  "riskLevel": "low | medium | high",
+  "confidence": number (0.0 to 1.0)
+}
+
+## Field Rules
+- detectedMode: The mode you determined based on user's intent. Do NOT ask the user.
+- detectedIntent: What the user truly means, not what they literally wrote.
+- emotionDetected: 1-3 emotions the user is likely feeling.
+- riskFlags: Social risks of the ORIGINAL message. Empty array if safe.
+- rewriteStrategy: Brief explanation of the rewrite approach.
+- privateBubbles: What the Pixie privately says to the user (sassy, honest, personality-rich). 1-5 bubbles.
+- suggestedPublicMessage: The improved message the user can send. Must sound like the user, not like AI.
+- userVoiceMatch: How well the suggestion matches the user's natural voice.
+- riskLevel: Overall risk assessment of the situation.
+- confidence: How confident you are in the suggestion.
+- Do not output markdown. Do not output explanations outside JSON. Do not add extra fields.
+`;
+
+export function assembleSuggestPrompt(persona: PersonaId): string {
+  return [
+    BASE_SYSTEM_PROMPT,
+    CONVERSATION_REALISM_PROMPT,
+    PERSONA_PROMPTS[persona],
+    buildSuggestAutoDetectPrompt(),
+    `## Five-Layer Analysis (internal reasoning)
+Before generating output, internally analyze:
+1. Surface Message: What did the user literally write?
+2. True Intent: What is the user actually trying to express?
+3. Emotion State: What is the user feeling right now?
+4. Social Risk: How might the original message land on the other person?
+5. User Voice: How can the better message still sound like the user?
+
+The output should not sound like a perfect corporate message. It should sound like the user, but clearer, safer, and more socially aware.`,
+    SUGGEST_OUTPUT_SCHEMA,
+  ].join("\n\n");
+}
+
 export function assembleChatPrompt(persona: PersonaId): string {
   return [
     BASE_SYSTEM_PROMPT,
@@ -518,6 +616,8 @@ Return ONLY valid JSON with exactly these fields (no markdown, no explanation, n
 - Do not output markdown. Do not output explanations outside JSON. Do not add extra fields.
 `;
 
+// Keep assembleExpressPrompt for backward compatibility but mark as deprecated
+/** @deprecated Use assembleSuggestPrompt instead */
 export function assembleExpressPrompt(persona: PersonaId, mode: ExpressModeId): string {
   return [
     BASE_SYSTEM_PROMPT,

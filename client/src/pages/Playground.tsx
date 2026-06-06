@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "wouter";
-import { Sparkles, MessageCircle, Eye, ArrowLeft, Loader2, Send, Copy, Check, Code, Users, AlertTriangle, Zap, Wand2, Shield } from "lucide-react";
+import { Sparkles, MessageCircle, Eye, ArrowLeft, Loader2, Send, Copy, Check, Code, Users, AlertTriangle, Zap, Shield } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -280,31 +280,24 @@ export default function Playground() {
 
       {/* Main content */}
       <main className="relative z-10 px-6 pb-16 max-w-6xl mx-auto">
-        <Tabs defaultValue="express" className="w-full">
-          <TabsList className="w-full grid grid-cols-4 bg-secondary/50 backdrop-blur-sm border border-border/50 mb-8">
-            <TabsTrigger value="express" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
-              <Wand2 className="w-4 h-4 mr-2" />
-              Express
-            </TabsTrigger>
-            <TabsTrigger value="suggestion" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+        <Tabs defaultValue="suggest" className="w-full">
+          <TabsList className="w-full grid grid-cols-3 bg-secondary/50 backdrop-blur-sm border border-border/50 mb-8">
+            <TabsTrigger value="suggest" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
               <Sparkles className="w-4 h-4 mr-2" />
-              Suggestion
+              精灵建议
             </TabsTrigger>
             <TabsTrigger value="chat" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
               <MessageCircle className="w-4 h-4 mr-2" />
-              Chat
+              私聊小精灵
             </TabsTrigger>
             <TabsTrigger value="autoContext" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
               <Eye className="w-4 h-4 mr-2" />
-              Auto Context
+              上下文感知
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="express">
-            <ExpressPanel />
-          </TabsContent>
-          <TabsContent value="suggestion">
-            <SuggestionPanel />
+          <TabsContent value="suggest">
+            <SuggestPanel />
           </TabsContent>
           <TabsContent value="chat">
             <ChatPanel />
@@ -318,9 +311,10 @@ export default function Playground() {
   );
 }
 
-/* ─── Express Panel (Intent-to-Expression) ─────────────────── */
+/* ─── Suggest Panel (精灵建议 — auto-detect mode) ────────── */
 
-interface ExpressResponse {
+interface SuggestResponse {
+  detectedMode: string;
   detectedIntent: string;
   emotionDetected: string[];
   riskFlags: string[];
@@ -332,18 +326,6 @@ interface ExpressResponse {
   confidence: number;
 }
 
-const EXPRESS_MODES = [
-  { id: "compliment", label: "赞美", emoji: "💖" },
-  { id: "flirt", label: "调情", emoji: "😏" },
-  { id: "invite", label: "邀约", emoji: "🎉" },
-  { id: "rewrite", label: "改写", emoji: "✏️" },
-  { id: "boundary", label: "边界", emoji: "🛡️" },
-  { id: "reject", label: "拒绝", emoji: "✋" },
-  { id: "plan", label: "计划", emoji: "📅" },
-  { id: "clarify", label: "澄清", emoji: "💡" },
-  { id: "casual", label: "随意聊", emoji: "💬" },
-] as const;
-
 const RELATIONSHIP_STAGES = [
   { id: "new_match", label: "新匹配" },
   { id: "casual_chat", label: "随意聊" },
@@ -352,10 +334,9 @@ const RELATIONSHIP_STAGES = [
   { id: "unknown", label: "未知" },
 ] as const;
 
-function ExpressPanel() {
+function SuggestPanel() {
   const [persona, setPersona] = useState<PersonaId>("sassy_roast_bestie");
   const [rawMessage, setRawMessage] = useState("我想约她周末去看美术展，但不知道怎么开口。");
-  const [mode, setMode] = useState<string>("invite");
   const [targetName, setTargetName] = useState("Alice");
   const [relationshipStage, setRelationshipStage] = useState("casual_chat");
   const [contextInput, setContextInput] = useState("Alice: 最近好无聊啊\nJiaYi: 是啊，想找点事做");
@@ -369,10 +350,10 @@ function ExpressPanel() {
   const [voiceFlirtingStyle, setVoiceFlirtingStyle] = useState("low-pressure, sincere, not sexualized");
   const [voiceConflictStyle, setVoiceConflictStyle] = useState("avoidant at first, needs help setting boundaries");
   const [voiceSocialWeaknesses, setVoiceSocialWeaknesses] = useState("");
-  const [result, setResult] = useState<ExpressResponse | null>(null);
+  const [result, setResult] = useState<SuggestResponse | null>(null);
 
-  const mutation = trpc.pixie.express.useMutation({
-    onSuccess: (data) => setResult(data as ExpressResponse),
+  const mutation = trpc.pixie.suggest.useMutation({
+    onSuccess: (data) => setResult(data as SuggestResponse),
   });
 
   const handleSubmit = () => {
@@ -404,7 +385,6 @@ function ExpressPanel() {
       pixieId: "lumi",
       persona,
       rawMessage,
-      mode,
       chatContext,
     };
 
@@ -436,32 +416,12 @@ function ExpressPanel() {
       {/* Input panel */}
       <div className="cosmic-card rounded-xl p-6">
         <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-          <Wand2 className="w-5 h-5 text-primary" />
-          Express 请求参数
+          <Sparkles className="w-5 h-5 text-primary" />
+          精灵建议 请求参数
         </h3>
 
         <div className="space-y-4">
           <PersonaSelector value={persona} onChange={setPersona} />
-
-          {/* Mode selector */}
-          <div>
-            <label className="text-sm text-muted-foreground mb-1 block">模式 (mode)</label>
-            <div className="grid grid-cols-3 gap-2">
-              {EXPRESS_MODES.map((m) => (
-                <button
-                  key={m.id}
-                  onClick={() => setMode(m.id)}
-                  className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                    mode === m.id
-                      ? "bg-primary/20 text-primary border border-primary/40"
-                      : "bg-secondary/50 text-muted-foreground border border-border/50 hover:border-primary/20"
-                  }`}
-                >
-                  {m.emoji} {m.label}
-                </button>
-              ))}
-            </div>
-          </div>
 
           {/* Raw message */}
           <div>
@@ -617,9 +577,9 @@ function ExpressPanel() {
             {mutation.isPending ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             ) : (
-              <Wand2 className="w-4 h-4 mr-2" />
+              <Send className="w-4 h-4 mr-2" />
             )}
-            发送 Express 请求
+            发送精灵建议
           </Button>
         </div>
       </div>
@@ -627,13 +587,13 @@ function ExpressPanel() {
       {/* Response panel */}
       <div className="cosmic-card rounded-xl p-6">
         <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-          <Wand2 className="w-4 h-4 text-primary" />
+          <Sparkles className="w-4 h-4 text-primary" />
           {personaName} 的表达建议
         </h3>
         {mutation.isPending && (
           <div className="flex items-center justify-center h-48 text-muted-foreground">
             <Loader2 className="w-6 h-6 animate-spin mr-2" />
-            {personaName} 正在分析你的意图...
+            {personaName} 正在分析你的意图，自动判断最佳模式...
           </div>
         )}
         {mutation.error && (
@@ -646,7 +606,12 @@ function ExpressPanel() {
             {/* Analysis summary */}
             <div className="space-y-2">
               <div className="p-3 rounded-lg bg-secondary/30 border border-border/30">
-                <span className="text-xs text-muted-foreground">检测意图:</span>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs text-muted-foreground">检测意图:</span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary/15 text-primary border border-primary/25">
+                    mode: {result.detectedMode}
+                  </span>
+                </div>
                 <p className="text-sm text-foreground mt-0.5">{result.detectedIntent}</p>
               </div>
               {result.emotionDetected.length > 0 && (
@@ -731,7 +696,7 @@ function ExpressPanel() {
         )}
         {!result && !mutation.isPending && !mutation.error && (
           <div className="flex items-center justify-center h-48 text-muted-foreground/60 text-sm">
-            点击"发送 Express 请求"查看 {personaName} 的表达建议
+                        点击“发送精灵建议”查看 {personaName} 的表达建议
           </div>
         )}
       </div>
@@ -739,153 +704,7 @@ function ExpressPanel() {
   );
 }
 
-/* ─── Suggestion Panel ─────────────────────────────────────── */
 
-function SuggestionPanel() {
-  const [persona, setPersona] = useState<PersonaId>("sassy_roast_bestie");
-  const [rawMessage, setRawMessage] = useState("我想约她看电影，但不想尴尬。");
-  const [mode, setMode] = useState<"icebreaker" | "rewrite" | "boundary" | "plan" | "whisper" | "offline_profile">("icebreaker");
-  const [contextInput, setContextInput] = useState("Alice: 今晚有人想看电影吗？");
-  const [result, setResult] = useState<BubblesResponse | null>(null);
-
-  const mutation = trpc.pixie.suggestion.useMutation({
-    onSuccess: (data) => setResult(data as BubblesResponse),
-  });
-
-  const handleSubmit = () => {
-    if (!rawMessage.trim()) {
-      toast.error("请输入用户原始消息");
-      return;
-    }
-    const contextErr = validateContextLines(contextInput);
-    if (contextErr) {
-      toast.error(contextErr);
-      return;
-    }
-
-    const chatContext = contextInput
-      .split("\n")
-      .filter(Boolean)
-      .map((line) => {
-        const [name, ...rest] = line.split(":");
-        return {
-          senderName: name.trim(),
-          senderType: "human" as const,
-          content: rest.join(":").trim(),
-        };
-      });
-
-    mutation.mutate({
-      roomId: "playground-room",
-      userId: "testUser",
-      pixieId: "lumi",
-      persona,
-      rawMessage,
-      mode,
-      chatContext,
-    });
-  };
-
-  const personaName = PERSONAS.find(p => p.id === persona)?.name ?? "Lumi";
-
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Input panel */}
-      <div className="cosmic-card rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-primary" />
-          请求参数
-        </h3>
-
-        <div className="space-y-4">
-          <PersonaSelector value={persona} onChange={setPersona} />
-
-          <div>
-            <label className="text-sm text-muted-foreground mb-1 block">模式 (mode)</label>
-            <div className="grid grid-cols-3 gap-2">
-              {(["icebreaker", "rewrite", "boundary", "plan", "whisper", "offline_profile"] as const).map((m) => (
-                <button
-                  key={m}
-                  onClick={() => setMode(m)}
-                  className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                    mode === m
-                      ? "bg-primary/20 text-primary border border-primary/40"
-                      : "bg-secondary/50 text-muted-foreground border border-border/50 hover:border-primary/20"
-                  }`}
-                >
-                  {m}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="text-sm text-muted-foreground mb-1 block">用户原始输入 (rawMessage)</label>
-            <textarea
-              value={rawMessage}
-              onChange={(e) => setRawMessage(e.target.value)}
-              className="w-full h-24 rounded-lg bg-input border border-border/50 px-3 py-2 text-sm text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
-              placeholder="输入你想说的话..."
-            />
-          </div>
-
-          <div>
-            <label className="text-sm text-muted-foreground mb-1 block">聊天上下文 (每行一条: 名字: 内容)</label>
-            <textarea
-              value={contextInput}
-              onChange={(e) => setContextInput(e.target.value)}
-              className="w-full h-20 rounded-lg bg-input border border-border/50 px-3 py-2 text-sm text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
-              placeholder="Alice: 今晚有人想看电影吗？"
-            />
-          </div>
-
-          <Button
-            onClick={handleSubmit}
-            disabled={mutation.isPending}
-            className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_oklch(0.78_0.14_192_/_20%)]"
-          >
-            {mutation.isPending ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Send className="w-4 h-4 mr-2" />
-            )}
-            发送请求
-          </Button>
-        </div>
-      </div>
-
-      {/* Response panel */}
-      <div className="cosmic-card rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-          <MessageCircle className="w-4 h-4 text-primary" />
-          {personaName} 的回复
-        </h3>
-        {mutation.isPending && (
-          <div className="flex items-center justify-center h-48 text-muted-foreground">
-            <Loader2 className="w-6 h-6 animate-spin mr-2" />
-            {personaName} 正在思考...
-          </div>
-        )}
-        {mutation.error && (
-          <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm">
-            {mutation.error.message}
-          </div>
-        )}
-        {result && !mutation.isPending && (
-          <div className="space-y-4">
-            <BubblesRenderer response={result} personaName={personaName} />
-            <JsonViewer data={result as unknown as Record<string, unknown>} />
-          </div>
-        )}
-        {!result && !mutation.isPending && !mutation.error && (
-          <div className="flex items-center justify-center h-48 text-muted-foreground/60 text-sm">
-            点击"发送请求"查看 {personaName} 的回复
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 /* ─── Chat Panel ───────────────────────────────────────────── */
 
