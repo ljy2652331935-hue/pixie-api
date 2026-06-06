@@ -26,7 +26,7 @@ export default function Home() {
           <Link href="/chat">
             <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
               <MessagesSquare className="w-4 h-4 mr-2" />
-              聊天
+              Chat
             </Button>
           </Link>
           <Link href="/docs">
@@ -56,23 +56,23 @@ export default function Home() {
             Pixie API
           </h1>
           <p className="text-xl md:text-2xl text-muted-foreground font-light mb-4">
-            AI 社交副驾驶 · Lumi 小精灵
+            AI Social Co-Pilot · Your Pixie Companion
           </p>
           <p className="text-base text-muted-foreground/80 max-w-xl mx-auto mb-12 leading-relaxed">
-            帮助用户在社交场景中更好地表达自己。不替代人类社交，而是让人和人更自然地连接。
+            Helping you express yourself better in social situations. Not replacing human connection — making it more natural.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/playground">
               <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_20px_oklch(0.78_0.14_192_/_30%)] transition-all hover:shadow-[0_0_30px_oklch(0.78_0.14_192_/_50%)]">
                 <Play className="w-5 h-5 mr-2" />
-                进入 Playground
+                Open Playground
               </Button>
             </Link>
             <Link href="/docs">
               <Button size="lg" variant="outline" className="border-primary/30 text-foreground hover:bg-primary/10">
                 <BookOpen className="w-5 h-5 mr-2" />
-                查看 API 文档
+                View API Docs
               </Button>
             </Link>
           </div>
@@ -83,26 +83,26 @@ export default function Home() {
           <FeatureCard
             icon={<Sparkles className="w-6 h-6" />}
             title="Suggestion API"
-            description="分析用户话语，给出更自然、更适合社交场景的表达建议"
+            description="Analyzes your messages and suggests more natural, socially-aware expressions"
             badge="P0"
           />
           <FeatureCard
             icon={<MessageCircle className="w-6 h-6" />}
             title="Chat API"
-            description="私下和 Lumi 交流，获取社交军师建议和情绪陪伴"
+            description="Chat privately with Lumi for social advice and emotional support"
             badge="P1"
           />
           <FeatureCard
             icon={<Eye className="w-6 h-6" />}
             title="Presence API"
-            description="自动读取聊天上下文，在合适时机主动提醒或发言"
+            description="Reads chat context and speaks up at the right moment with reminders or tips"
             badge="P2"
           />
           <Link href="/chat" className="block">
             <FeatureCard
               icon={<MessagesSquare className="w-6 h-6" />}
               title="Live Chat"
-              description="和你的小精灵实时对话，获取情绪陪伴和社交建议"
+              description="Real-time conversation with your Pixie for emotional support and social guidance"
               badge="NEW"
             />
           </Link>

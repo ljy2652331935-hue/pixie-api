@@ -29,12 +29,12 @@ interface BubblesResponse {
 // ─── Persona definitions (matches server) ─────────────────────
 
 const PERSONAS = [
-  { id: "sassy_roast_bestie", name: "Lumi", label: "毒舌吐槽闺蜜", emoji: "🔥" },
-  { id: "smooth_witty_fox", name: "Lumi", label: "机灵狐狸军师", emoji: "🦊" },
-  { id: "elegant_gentleman", name: "Soren", label: "优雅绅士", emoji: "🎩" },
-  { id: "loyal_bro", name: "Koda", label: "兄弟护短", emoji: "🤝" },
-  { id: "soft_social_anxiety_helper", name: "Mimi", label: "温柔社恐辅助", emoji: "🌸" },
-  { id: "calm_strategist", name: "Orin", label: "冷静理性军师", emoji: "🧊" },
+  { id: "sassy_roast_bestie", name: "Lumi", label: "Sassy Roast Bestie", emoji: "🔥" },
+  { id: "smooth_witty_fox", name: "Lumi", label: "Smooth Witty Fox", emoji: "🦊" },
+  { id: "elegant_gentleman", name: "Soren", label: "Elegant Gentleman", emoji: "🎩" },
+  { id: "loyal_bro", name: "Koda", label: "Loyal Bro", emoji: "🤝" },
+  { id: "soft_social_anxiety_helper", name: "Mimi", label: "Soft Social Anxiety Helper", emoji: "🌸" },
+  { id: "calm_strategist", name: "Orin", label: "Calm Strategist", emoji: "🧊" },
 ] as const;
 
 type PersonaId = (typeof PERSONAS)[number]["id"];
@@ -47,7 +47,7 @@ function PersonaSelector({ value, onChange }: { value: PersonaId; onChange: (v: 
     <div>
       <label className="text-sm text-muted-foreground mb-1 block flex items-center gap-1">
         <Users className="w-3.5 h-3.5" />
-        人格 (persona)
+        Persona
       </label>
       <Select value={value} onValueChange={(v) => onChange(v as PersonaId)}>
         <SelectTrigger className="w-full bg-input border-border/50 text-foreground">
@@ -71,7 +71,7 @@ function PersonaSelector({ value, onChange }: { value: PersonaId; onChange: (v: 
   );
 }
 
-// ─── Bubbles Renderer (逐条气泡动画) ─────────────────────────
+// ─── Bubbles Renderer ───────────────────────────────────────────
 
 function BubblesRenderer({ response, personaName }: { response: BubblesResponse; personaName: string }) {
   const [visibleCount, setVisibleCount] = useState(0);
@@ -207,7 +207,7 @@ function BubblesRenderer({ response, personaName }: { response: BubblesResponse;
               <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:300ms]" />
             </div>
           </div>
-          <span className="text-xs text-muted-foreground/50">{personaName} 正在输入...</span>
+          <span className="text-xs text-muted-foreground/50">{personaName} is typing...</span>
         </div>
       )}
 
@@ -216,7 +216,7 @@ function BubblesRenderer({ response, personaName }: { response: BubblesResponse;
         <div className="mt-4 p-3 rounded-xl bg-primary/8 border border-primary/25 animate-in fade-in slide-in-from-bottom-2 duration-300">
           <div className="flex items-center gap-1.5 mb-1.5">
             <Zap className="w-3.5 h-3.5 text-primary" />
-            <span className="text-xs font-medium text-primary">建议发送的消息</span>
+            <span className="text-xs font-medium text-primary">Suggested Message</span>
           </div>
           <p className="text-sm text-foreground leading-relaxed mb-2">{response.suggestedPublicMessage}</p>
           <Button
@@ -225,11 +225,11 @@ function BubblesRenderer({ response, personaName }: { response: BubblesResponse;
             className="text-xs border-primary/30 text-primary hover:bg-primary/10"
             onClick={() => {
               navigator.clipboard.writeText(response.suggestedPublicMessage!);
-              toast.success("已复制到剪贴板");
+              toast.success("Copied to clipboard");
             }}
           >
             <Copy className="w-3 h-3 mr-1" />
-            复制使用此消息
+            Copy Message
           </Button>
         </div>
       )}
@@ -237,13 +237,13 @@ function BubblesRenderer({ response, personaName }: { response: BubblesResponse;
       {/* Quick Replies */}
       {visibleCount >= response.bubbles.length && response.quickReplies.length > 0 && (
         <div className="mt-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <span className="text-xs text-muted-foreground mb-2 block">快速回复选项：</span>
+          <span className="text-xs text-muted-foreground mb-2 block">Quick Replies:</span>
           <div className="flex flex-wrap gap-2">
             {response.quickReplies.map((reply, i) => (
               <button
                 key={i}
                 className="px-3 py-1.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/25 hover:bg-primary/20 transition-colors"
-                onClick={() => toast.info(`选择了: ${reply}`)}
+                onClick={() => toast.info(`Selected: ${reply}`)}
               >
                 {reply}
               </button>
@@ -269,7 +269,7 @@ export default function Playground() {
         <Link href="/">
           <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            返回首页
+            Back to Home
           </Button>
         </Link>
         <div className="flex items-center gap-2">
@@ -284,15 +284,15 @@ export default function Playground() {
           <TabsList className="w-full grid grid-cols-3 bg-secondary/50 backdrop-blur-sm border border-border/50 mb-8">
             <TabsTrigger value="suggest" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
               <Sparkles className="w-4 h-4 mr-2" />
-              精灵建议
+              Pixie Suggest
             </TabsTrigger>
             <TabsTrigger value="chat" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
               <MessageCircle className="w-4 h-4 mr-2" />
-              私聊小精灵
+              Private Chat
             </TabsTrigger>
             <TabsTrigger value="autoContext" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
               <Eye className="w-4 h-4 mr-2" />
-              上下文感知
+              Context Awareness
             </TabsTrigger>
           </TabsList>
 
@@ -311,7 +311,7 @@ export default function Playground() {
   );
 }
 
-/* ─── Suggest Panel (精灵建议 — auto-detect mode) ────────── */
+/* ─── Suggest Panel (Pixie Suggest — auto-detect mode) ────────── */
 
 interface SuggestResponse {
   detectedMode: string;
@@ -327,19 +327,19 @@ interface SuggestResponse {
 }
 
 const RELATIONSHIP_STAGES = [
-  { id: "new_match", label: "新匹配" },
-  { id: "casual_chat", label: "随意聊" },
-  { id: "friend", label: "朋友" },
-  { id: "dating_interest", label: "约会对象" },
-  { id: "unknown", label: "未知" },
+  { id: "new_match", label: "New Match" },
+  { id: "casual_chat", label: "Casual Chat" },
+  { id: "friend", label: "Friend" },
+  { id: "dating_interest", label: "Dating Interest" },
+  { id: "unknown", label: "Unknown" },
 ] as const;
 
 function SuggestPanel() {
   const [persona, setPersona] = useState<PersonaId>("sassy_roast_bestie");
-  const [rawMessage, setRawMessage] = useState("我想约她周末去看美术展，但不知道怎么开口。");
+  const [rawMessage, setRawMessage] = useState("I want to ask her to an art exhibit this weekend, but I don't know how to start.");
   const [targetName, setTargetName] = useState("Alice");
   const [relationshipStage, setRelationshipStage] = useState("casual_chat");
-  const [contextInput, setContextInput] = useState("Alice: 最近好无聊啊\nJiaYi: 是啊，想找点事做");
+  const [contextInput, setContextInput] = useState("Alice: I'm so bored lately\nJiaYi: Yeah, wanna find something to do");
   const [showVoiceProfile, setShowVoiceProfile] = useState(false);
   const [voiceTone, setVoiceTone] = useState("warm, expressive");
   const [voiceLength, setVoiceLength] = useState("short");
@@ -358,7 +358,7 @@ function SuggestPanel() {
 
   const handleSubmit = () => {
     if (!rawMessage.trim()) {
-      toast.error("请输入用户原始消息");
+      toast.error("Please enter a message");
       return;
     }
     const contextErr = validateContextLines(contextInput);
@@ -417,7 +417,7 @@ function SuggestPanel() {
       <div className="cosmic-card rounded-xl p-6">
         <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-primary" />
-          精灵建议 请求参数
+          Pixie Suggest Request Parameters
         </h3>
 
         <div className="space-y-4">
@@ -425,24 +425,24 @@ function SuggestPanel() {
 
           {/* Raw message */}
           <div>
-            <label className="text-sm text-muted-foreground mb-1 block">用户原始输入 (rawMessage)</label>
+            <label className="text-sm text-muted-foreground mb-1 block">Raw Message (rawMessage)</label>
             <textarea
               value={rawMessage}
               onChange={(e) => setRawMessage(e.target.value)}
               className="w-full h-20 rounded-lg bg-input border border-border/50 px-3 py-2 text-sm text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
-              placeholder="输入你想表达的意思..."
+              placeholder="What do you want to say..."
             />
           </div>
 
           {/* Target user */}
           <div>
-            <label className="text-sm text-muted-foreground mb-1 block">目标用户 (targetUser)</label>
+            <label className="text-sm text-muted-foreground mb-1 block">Target User (targetUser)</label>
             <div className="grid grid-cols-2 gap-2">
               <input
                 value={targetName}
                 onChange={(e) => setTargetName(e.target.value)}
                 className="rounded-lg bg-input border border-border/50 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                placeholder="名字"
+                placeholder="Name"
               />
               <Select value={relationshipStage} onValueChange={setRelationshipStage}>
                 <SelectTrigger className="bg-input border-border/50 text-foreground text-sm">
@@ -459,12 +459,12 @@ function SuggestPanel() {
 
           {/* Chat context */}
           <div>
-            <label className="text-sm text-muted-foreground mb-1 block">聊天上下文 (每行一条: 名字: 内容)</label>
+            <label className="text-sm text-muted-foreground mb-1 block">Chat Context (one per line: Name: Content)</label>
             <textarea
               value={contextInput}
               onChange={(e) => setContextInput(e.target.value)}
               className="w-full h-16 rounded-lg bg-input border border-border/50 px-3 py-2 text-sm text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
-              placeholder="Alice: 最近好无聊啊"
+              placeholder="Alice: I'm so bored lately"
             />
           </div>
 
@@ -475,12 +475,12 @@ function SuggestPanel() {
               className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 transition-colors"
             >
               <Users className="w-3 h-3" />
-              {showVoiceProfile ? "收起" : "展开"} 用户语音画像 (userVoiceProfile)
+              {showVoiceProfile ? "Collapse" : "Expand"} Voice Profile (userVoiceProfile)
             </button>
             {showVoiceProfile && (
               <div className="mt-2 space-y-2 p-3 rounded-lg bg-secondary/30 border border-border/30">
                 <div>
-                  <label className="text-xs text-muted-foreground">语气 (tone, 逗号分隔)</label>
+                  <label className="text-xs text-muted-foreground">Tone (comma-separated)</label>
                   <input
                     value={voiceTone}
                     onChange={(e) => setVoiceTone(e.target.value)}
@@ -489,34 +489,34 @@ function SuggestPanel() {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="text-xs text-muted-foreground">消息长度</label>
+                    <label className="text-xs text-muted-foreground">Message Length</label>
                     <Select value={voiceLength} onValueChange={setVoiceLength}>
                       <SelectTrigger className="bg-input border-border/50 text-foreground text-xs h-7">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-popover border-border">
-                        <SelectItem value="short">短</SelectItem>
-                        <SelectItem value="medium">中</SelectItem>
-                        <SelectItem value="long">长</SelectItem>
+                        <SelectItem value="short">Short</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="long">Long</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground">正式程度</label>
+                    <label className="text-xs text-muted-foreground">Formality</label>
                     <Select value={voiceFormality} onValueChange={setVoiceFormality}>
                       <SelectTrigger className="bg-input border-border/50 text-foreground text-xs h-7">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-popover border-border">
-                        <SelectItem value="casual">随意</SelectItem>
-                        <SelectItem value="semi_casual">半随意</SelectItem>
-                        <SelectItem value="formal">正式</SelectItem>
+                        <SelectItem value="casual">Casual</SelectItem>
+                        <SelectItem value="semi_casual">Semi-casual</SelectItem>
+                        <SelectItem value="formal">Formal</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground">幽默风格 (humorStyle)</label>
+                  <label className="text-xs text-muted-foreground">Humor Style (humorStyle)</label>
                   <input
                     value={voiceHumorStyle}
                     onChange={(e) => setVoiceHumorStyle(e.target.value)}
@@ -524,16 +524,16 @@ function SuggestPanel() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground">常用词组 (commonPhrases, 逗号分隔)</label>
+                  <label className="text-xs text-muted-foreground">Common Phrases (comma-separated)</label>
                   <input
                     value={voiceCommonPhrases}
                     onChange={(e) => setVoiceCommonPhrases(e.target.value)}
                     className="w-full rounded bg-input border border-border/50 px-2 py-1 text-xs text-foreground"
-                    placeholder="哈哈, 真的吗, 我觉得..."
+                    placeholder="haha, really?, I think..."
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground">避免词组 (avoidPhrases, 逗号分隔)</label>
+                  <label className="text-xs text-muted-foreground">Avoid Phrases (comma-separated)</label>
                   <input
                     value={voiceAvoidPhrases}
                     onChange={(e) => setVoiceAvoidPhrases(e.target.value)}
@@ -541,7 +541,7 @@ function SuggestPanel() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground">调情风格 (flirtingStyle)</label>
+                  <label className="text-xs text-muted-foreground">Flirting Style (flirtingStyle)</label>
                   <input
                     value={voiceFlirtingStyle}
                     onChange={(e) => setVoiceFlirtingStyle(e.target.value)}
@@ -549,7 +549,7 @@ function SuggestPanel() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground">冲突风格 (conflictStyle)</label>
+                  <label className="text-xs text-muted-foreground">Conflict Style (conflictStyle)</label>
                   <input
                     value={voiceConflictStyle}
                     onChange={(e) => setVoiceConflictStyle(e.target.value)}
@@ -557,12 +557,12 @@ function SuggestPanel() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground">社交弱点 (socialWeaknesses, 逗号分隔)</label>
+                  <label className="text-xs text-muted-foreground">Social Weaknesses (comma-separated)</label>
                   <input
                     value={voiceSocialWeaknesses}
                     onChange={(e) => setVoiceSocialWeaknesses(e.target.value)}
                     className="w-full rounded bg-input border border-border/50 px-2 py-1 text-xs text-foreground"
-                    placeholder="害羞, 不会拒绝..."
+                    placeholder="shy, can't say no..."
                   />
                 </div>
               </div>
@@ -579,7 +579,7 @@ function SuggestPanel() {
             ) : (
               <Send className="w-4 h-4 mr-2" />
             )}
-            发送精灵建议
+            Send Suggestion
           </Button>
         </div>
       </div>
@@ -588,12 +588,12 @@ function SuggestPanel() {
       <div className="cosmic-card rounded-xl p-6">
         <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-primary" />
-          {personaName} 的表达建议
+          {personaName}'s Suggestion
         </h3>
         {mutation.isPending && (
           <div className="flex items-center justify-center h-48 text-muted-foreground">
             <Loader2 className="w-6 h-6 animate-spin mr-2" />
-            {personaName} 正在分析你的意图，自动判断最佳模式...
+            {personaName} is analyzing your intent and detecting the best mode...
           </div>
         )}
         {mutation.error && (
@@ -607,7 +607,7 @@ function SuggestPanel() {
             <div className="space-y-2">
               <div className="p-3 rounded-lg bg-secondary/30 border border-border/30">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs text-muted-foreground">检测意图:</span>
+                  <span className="text-xs text-muted-foreground">Detected Intent:</span>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary/15 text-primary border border-primary/25">
                     mode: {result.detectedMode}
                   </span>
@@ -616,7 +616,7 @@ function SuggestPanel() {
               </div>
               {result.emotionDetected.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 items-center">
-                  <span className="text-xs text-muted-foreground">情绪:</span>
+                  <span className="text-xs text-muted-foreground">Emotion:</span>
                   {result.emotionDetected.map((e, i) => (
                     <span key={i} className="px-2 py-0.5 rounded-full text-xs bg-primary/10 text-primary border border-primary/20">{e}</span>
                   ))}
@@ -632,7 +632,7 @@ function SuggestPanel() {
               )}
               {result.rewriteStrategy && (
                 <div className="p-2 rounded-lg bg-primary/5 border border-primary/15">
-                  <span className="text-xs text-muted-foreground">改写策略:</span>
+                  <span className="text-xs text-muted-foreground">Rewrite Strategy:</span>
                   <p className="text-xs text-foreground mt-0.5">{result.rewriteStrategy}</p>
                 </div>
               )}
@@ -641,7 +641,7 @@ function SuggestPanel() {
             {/* Private bubbles */}
             {result.privateBubbles.length > 0 && (
               <div className="space-y-2">
-                <span className="text-xs text-muted-foreground block">💬 私下建议:</span>
+                <span className="text-xs text-muted-foreground block">💬 Private Advice:</span>
                 {result.privateBubbles.map((b, i) => (
                   <div key={i} className="flex items-start gap-2 animate-in fade-in slide-in-from-bottom-1 duration-200" style={{ animationDelay: `${b.delayMs}ms` }}>
                     <span className="text-sm shrink-0">
@@ -660,7 +660,7 @@ function SuggestPanel() {
               <div className="p-3 rounded-xl bg-primary/8 border border-primary/25">
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <Zap className="w-3.5 h-3.5 text-primary" />
-                  <span className="text-xs font-medium text-primary">建议发送的消息</span>
+                  <span className="text-xs font-medium text-primary">Suggested Message</span>
                 </div>
                 <p className="text-sm text-foreground leading-relaxed mb-2">{result.suggestedPublicMessage}</p>
                 <Button
@@ -669,11 +669,11 @@ function SuggestPanel() {
                   className="text-xs border-primary/30 text-primary hover:bg-primary/10"
                   onClick={() => {
                     navigator.clipboard.writeText(result.suggestedPublicMessage);
-                    toast.success("已复制到剪贴板");
+                    toast.success("Copied to clipboard");
                   }}
                 >
                   <Copy className="w-3 h-3 mr-1" />
-                  复制使用此消息
+                  Copy Message
                 </Button>
               </div>
             )}
@@ -685,10 +685,10 @@ function SuggestPanel() {
                 result.riskLevel === "medium" ? "bg-amber-500/10 text-amber-400 border-amber-500/30" :
                 "bg-green-500/10 text-green-400 border-green-500/30"
               }`}>
-                风险: {result.riskLevel}
+                Risk: {result.riskLevel}
               </span>
-              <span>置信度: {Math.round(result.confidence * 100)}%</span>
-              <span>语音匹配: {Math.round(result.userVoiceMatch * 100)}%</span>
+              <span>Confidence: {Math.round(result.confidence * 100)}%</span>
+              <span>Voice Match: {Math.round(result.userVoiceMatch * 100)}%</span>
             </div>
 
             <JsonViewer data={result as unknown as Record<string, unknown>} />
@@ -696,7 +696,7 @@ function SuggestPanel() {
         )}
         {!result && !mutation.isPending && !mutation.error && (
           <div className="flex items-center justify-center h-48 text-muted-foreground/60 text-sm">
-                        点击“发送精灵建议”查看 {personaName} 的表达建议
+                        Click "Send Suggestion" to see {personaName}'s advice
           </div>
         )}
       </div>
@@ -710,8 +710,8 @@ function SuggestPanel() {
 
 function ChatPanel() {
   const [persona, setPersona] = useState<PersonaId>("sassy_roast_bestie");
-  const [privateQuestion, setPrivateQuestion] = useState("她说想去 Waterloo 看电影，我是不是该主动定时间？");
-  const [contextInput, setContextInput] = useState("Alice: 那我们去 Waterloo 那边的影院？\nJiaYi: 好啊！");
+  const [privateQuestion, setPrivateQuestion] = useState("She said she wants to see a movie in Waterloo. Should I suggest a time?");
+  const [contextInput, setContextInput] = useState("Alice: How about the cinema near Waterloo?\nJiaYi: Sounds good!");
   const [result, setResult] = useState<BubblesResponse | null>(null);
 
   const mutation = trpc.pixie.chat.useMutation({
@@ -720,7 +720,7 @@ function ChatPanel() {
 
   const handleSubmit = () => {
     if (!privateQuestion.trim()) {
-      toast.error("请输入私下问题");
+      toast.error("Please enter a private question");
       return;
     }
     const contextErr = validateContextLines(contextInput);
@@ -758,29 +758,29 @@ function ChatPanel() {
       <div className="cosmic-card rounded-xl p-6">
         <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
           <MessageCircle className="w-5 h-5 text-primary" />
-          请求参数
+          Request Parameters
         </h3>
 
         <div className="space-y-4">
           <PersonaSelector value={persona} onChange={setPersona} />
 
           <div>
-            <label className="text-sm text-muted-foreground mb-1 block">私下问题 (privateQuestion)</label>
+            <label className="text-sm text-muted-foreground mb-1 block">Private Question (privateQuestion)</label>
             <textarea
               value={privateQuestion}
               onChange={(e) => setPrivateQuestion(e.target.value)}
               className="w-full h-24 rounded-lg bg-input border border-border/50 px-3 py-2 text-sm text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
-              placeholder="私下问 Pixie 的问题..."
+              placeholder="Ask your Pixie privately..."
             />
           </div>
 
           <div>
-            <label className="text-sm text-muted-foreground mb-1 block">聊天上下文 (每行一条: 名字: 内容)</label>
+            <label className="text-sm text-muted-foreground mb-1 block">Chat Context (one per line: Name: Content)</label>
             <textarea
               value={contextInput}
               onChange={(e) => setContextInput(e.target.value)}
               className="w-full h-20 rounded-lg bg-input border border-border/50 px-3 py-2 text-sm text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
-              placeholder="Alice: 那我们去 Waterloo 那边的影院？"
+              placeholder="Alice: How about the cinema near Waterloo?"
             />
           </div>
 
@@ -794,7 +794,7 @@ function ChatPanel() {
             ) : (
               <Send className="w-4 h-4 mr-2" />
             )}
-            发送请求
+            Send Request
           </Button>
         </div>
       </div>
@@ -802,12 +802,12 @@ function ChatPanel() {
       <div className="cosmic-card rounded-xl p-6">
         <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
           <MessageCircle className="w-4 h-4 text-primary" />
-          {personaName} 的私聊回复
+          {personaName}'s Private Reply
         </h3>
         {mutation.isPending && (
           <div className="flex items-center justify-center h-48 text-muted-foreground">
             <Loader2 className="w-6 h-6 animate-spin mr-2" />
-            {personaName} 正在思考...
+            {personaName} is thinking...
           </div>
         )}
         {mutation.error && (
@@ -823,7 +823,7 @@ function ChatPanel() {
         )}
         {!result && !mutation.isPending && !mutation.error && (
           <div className="flex items-center justify-center h-48 text-muted-foreground/60 text-sm">
-            点击"发送请求"查看 {personaName} 的私聊回复
+            Click "Send Request" to see {personaName}'s Private Reply
           </div>
         )}
       </div>
@@ -849,7 +849,7 @@ interface PresenceResponse {
 function AutoContextPanel() {
   const [persona, setPersona] = useState<PersonaId>("sassy_roast_bestie");
   const [contextInput, setContextInput] = useState(
-    "Alice: 今晚有人想看电影吗？\nJiaYi: 我也想看！\nAlice: 轻松一点的吧，不要恐怖片\nJiaYi: 好的没问题"
+    "Alice: Anyone wanna watch a movie tonight?\nJiaYi: I'm down!\nAlice: Something light, no horror\nJiaYi: Sure, no problem"
   );
 
   const [result, setResult] = useState<PresenceResponse | null>(null);
@@ -860,7 +860,7 @@ function AutoContextPanel() {
 
   const handleSubmit = () => {
     if (!contextInput.trim()) {
-      toast.error("请输入至少一条聊天上下文");
+      toast.error("Please enter at least one chat message");
       return;
     }
     const contextErr = validateContextLines(contextInput);
@@ -898,19 +898,19 @@ function AutoContextPanel() {
       <div className="cosmic-card rounded-xl p-6">
         <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
           <Eye className="w-5 h-5 text-primary" />
-          请求参数
+          Request Parameters
         </h3>
 
         <div className="space-y-4">
           <PersonaSelector value={persona} onChange={setPersona} />
 
           <div>
-            <label className="text-sm text-muted-foreground mb-1 block">聊天上下文 (每行一条: 名字: 内容)</label>
+            <label className="text-sm text-muted-foreground mb-1 block">Chat Context (one per line: Name: Content)</label>
             <textarea
               value={contextInput}
               onChange={(e) => setContextInput(e.target.value)}
               className="w-full h-28 rounded-lg bg-input border border-border/50 px-3 py-2 text-sm text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
-              placeholder="Alice: 今晚有人想看电影吗？"
+              placeholder="Alice: Anyone wanna watch a movie tonight?"
             />
           </div>
 
@@ -926,7 +926,7 @@ function AutoContextPanel() {
             ) : (
               <Send className="w-4 h-4 mr-2" />
             )}
-            发送请求
+            Send Request
           </Button>
         </div>
       </div>
@@ -934,12 +934,12 @@ function AutoContextPanel() {
       <div className="cosmic-card rounded-xl p-6">
         <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
           <Eye className="w-4 h-4 text-primary" />
-          {personaName} 的上下文分析
+          {personaName}'s Context Analysis
         </h3>
         {mutation.isPending && (
           <div className="flex items-center justify-center h-48 text-muted-foreground">
             <Loader2 className="w-6 h-6 animate-spin mr-2" />
-            {personaName} 正在读取房间...
+            {personaName} is reading the room...
           </div>
         )}
         {mutation.error && (
@@ -954,7 +954,7 @@ function AutoContextPanel() {
               <div className="flex items-center gap-2 mb-2">
                 <span className={`w-3 h-3 rounded-full ${result.shouldSpeak ? 'bg-green-400 animate-pulse' : 'bg-muted-foreground/40'}`} />
                 <span className="font-semibold text-foreground">
-                  {result.shouldSpeak ? `${personaName} 决定发言` : `${personaName} 选择沉默`}
+                  {result.shouldSpeak ? `${personaName} decides to speak` : `${personaName} stays silent`}
                 </span>
                 <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary">
                   {result.interventionType.replace(/_/g, ' ')}
@@ -966,7 +966,7 @@ function AutoContextPanel() {
             {/* Message */}
             {result.message && (
               <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-                <p className="text-sm text-muted-foreground mb-1">{personaName} 的消息：</p>
+                <p className="text-sm text-muted-foreground mb-1">{personaName}'s message:</p>
                 <p className="text-foreground font-medium">"{result.message}"</p>
                 <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                   <span>visibility: <span className="text-primary">{result.visibility}</span></span>
@@ -1006,7 +1006,7 @@ function AutoContextPanel() {
         )}
         {!result && !mutation.isPending && !mutation.error && (
           <div className="flex items-center justify-center h-48 text-muted-foreground/60 text-sm">
-            点击“发送请求”查看 {personaName} 的分析
+            Click "Send Request" to see {personaName}'s analysis
           </div>
         )}
       </div>
@@ -1020,7 +1020,7 @@ function validateContextLines(input: string): string | null {
   const lines = input.split("\n").filter(Boolean);
   for (const line of lines) {
     if (!line.includes(":")) {
-      return `格式错误: "${line}" 缺少分隔符 ":"，正确格式为 "名字: 内容"`;
+      return `Format error: "${line}" is missing ":". Correct format: "Name: Content"`;
     }
   }
   return null;
@@ -1036,7 +1036,7 @@ function JsonViewer({ data }: { data: Record<string, unknown> }) {
   const handleCopy = () => {
     navigator.clipboard.writeText(json);
     setCopied(true);
-    toast.success("已复制到剪贴板");
+    toast.success("Copied to clipboard");
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -1048,7 +1048,7 @@ function JsonViewer({ data }: { data: Record<string, unknown> }) {
           className="text-xs text-muted-foreground flex items-center gap-1 hover:text-primary transition-colors"
         >
           <Code className="w-3 h-3" />
-          {expanded ? "收起 JSON" : "展开 JSON"}
+          {expanded ? "Collapse JSON" : "Expand JSON"}
         </button>
         <button onClick={handleCopy} className="text-muted-foreground hover:text-primary transition-colors">
           {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}

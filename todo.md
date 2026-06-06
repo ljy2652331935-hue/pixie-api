@@ -86,3 +86,13 @@
 
 ## UI 修改
 - [x] 删除上下文感知面板中的活动意图 (activityIntent) 输入区域
+
+## 全站英文化
+- [x] Switch backend prompts (pixie-prompts.ts) to English - Lumi replies in English
+- [x] Switch Home page (Home.tsx) to English
+- [x] Switch Playground page to English
+- [x] Switch Docs page to English
+- [x] Switch LiveChat page to English
+- [x] Switch navigation/App.tsx to English
+- [x] Switch pixie-router.ts comments and prompt text to English
+- [x] Switch test data in pixie-router.test.ts to English

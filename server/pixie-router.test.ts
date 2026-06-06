@@ -59,10 +59,10 @@ describe("pixie.suggest", () => {
       userId: "testUser",
       pixieId: "lumi",
       persona: "sassy_roast_bestie",
-      rawMessage: "我想约她周末去看美术展，但不知道怎么开口。",
+      rawMessage: "I want to ask her to an art exhibit this weekend, but I don't know how to start.",
       targetUser: { name: "Alice", relationshipStage: "casual_chat" },
       chatContext: [
-        { senderName: "Alice", senderType: "human", content: "最近好无聊啊" },
+        { senderName: "Alice", senderType: "human", content: "I'm so bored lately" },
       ],
     });
 
@@ -109,10 +109,10 @@ describe("pixie.chat", () => {
       userId: "testUser",
       pixieId: "lumi",
       persona: "smooth_witty_fox",
-      privateQuestion: "她说想去 Waterloo 看电影，我是不是该主动定时间？",
+      privateQuestion: "She said she wants to see a movie in Waterloo. Should I suggest a time?",
       chatContext: [
-        { senderName: "Alice", senderType: "human", content: "那我们去 Waterloo 那边的影院？" },
-        { senderName: "JiaYi", senderType: "human", content: "好啊！" },
+        { senderName: "Alice", senderType: "human", content: "How about the cinema near Waterloo?" },
+        { senderName: "JiaYi", senderType: "human", content: "Sounds good!" },
       ],
     });
 
@@ -130,8 +130,8 @@ describe("pixie.autoContext (Presence)", () => {
       pixieId: "lumi",
       persona: "calm_strategist",
       chatContext: [
-        { senderName: "Alice", senderType: "human", content: "今晚有人想看电影吗？" },
-        { senderName: "JiaYi", senderType: "human", content: "我也想看！" },
+        { senderName: "Alice", senderType: "human", content: "Anyone wanna watch a movie tonight?" },
+        { senderName: "JiaYi", senderType: "human", content: "I'm down!" },
       ],
       activityIntent: { activity: "watch a movie", area: "Waterloo", time: "tonight" },
     });
@@ -173,7 +173,7 @@ describe("pixie.liveChat", () => {
     const result = await caller.pixie.liveChat({
       persona: "sassy_roast_bestie",
       messages: [
-        { role: "user", content: "今天好累啊" },
+        { role: "user", content: "I'm so tired today" },
       ],
     });
 

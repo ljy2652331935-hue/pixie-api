@@ -25,12 +25,12 @@ type ChatMessage = {
 };
 
 const PERSONA_OPTIONS = [
-  { id: "sassy_roast_bestie", name: "Lumi", label: "毒舌吐槽闺蜜" },
-  { id: "smooth_witty_fox", name: "Lumi", label: "机灵狐狸军师" },
-  { id: "elegant_gentleman", name: "Soren", label: "优雅绅士" },
-  { id: "loyal_bro", name: "Koda", label: "兄弟护短" },
-  { id: "soft_social_anxiety_helper", name: "Mimi", label: "温柔社恐辅助" },
-  { id: "calm_strategist", name: "Orin", label: "冷静理性军师" },
+  { id: "sassy_roast_bestie", name: "Lumi", label: "Sassy Roast Bestie" },
+  { id: "smooth_witty_fox", name: "Lumi", label: "Smooth Witty Fox" },
+  { id: "elegant_gentleman", name: "Soren", label: "Elegant Gentleman" },
+  { id: "loyal_bro", name: "Koda", label: "Loyal Bro" },
+  { id: "soft_social_anxiety_helper", name: "Mimi", label: "Soft Social Anxiety Helper" },
+  { id: "calm_strategist", name: "Orin", label: "Calm Strategist" },
 ];
 
 const EMOTION_COLORS: Record<string, string> = {
@@ -80,7 +80,7 @@ export default function LiveChat() {
     },
     onError: (err) => {
       setIsTyping(false);
-      toast.error("发送失败: " + err.message);
+      toast.error("Send failed: " + err.message);
     },
   });
 
@@ -176,16 +176,16 @@ export default function LiveChat() {
             </div>
             <div>
               <h2 className="text-white/90 font-semibold text-lg">
-                嗨，我是{selectedPersona?.name || "Lumi"} ✨
+                Hey, I'm {selectedPersona?.name || "Lumi"} ✨
               </h2>
               <p className="text-white/50 text-sm mt-1 max-w-sm">
-                {selectedPersona?.label === "毒舌吐槽闺蜜"
-                  ? "有什么想聊的？不管是吐槽、纠结还是发疯，我都接着。"
-                  : `我是你的${selectedPersona?.label}，随时可以聊。`}
+                {selectedPersona?.label === "Sassy Roast Bestie"
+                  ? "What's on your mind? Vent, spiral, or go off — I'm here for it."
+                  : `I'm your ${selectedPersona?.label}. Chat anytime.`}
               </p>
             </div>
             <div className="flex flex-wrap gap-2 justify-center max-w-md">
-              {["今天好累啊", "我在想一个人...", "有点无聊", "我需要点自信"].map((q) => (
+              {["I'm so tired today", "I keep thinking about someone...", "I'm kinda bored", "I need a confidence boost"].map((q) => (
                 <button
                   key={q}
                   onClick={() => handleSend(q)}
@@ -266,7 +266,7 @@ export default function LiveChat() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={`和${selectedPersona?.name || "Lumi"}说点什么...`}
+            placeholder={`Say something to ${selectedPersona?.name || "Lumi"}...`}
             className="flex-1 bg-white/5 border-white/15 text-white placeholder:text-white/30 focus-visible:ring-cyan-400/50 rounded-full px-4"
             disabled={isTyping}
           />

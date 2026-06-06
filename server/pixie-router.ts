@@ -1,8 +1,8 @@
 /**
  * Pixie API Router — Conversation Realism Edition
  * ─────────────────────────────────────────────────
- * 三个核心端点：suggestion / chat / autoContext
- * 统一输出 bubbles 格式，支持逐条气泡渲染
+ * Three core endpoints: suggestion / chat / autoContext
+ * Unified bubbles output format for sequential bubble rendering
  */
 
 import { z } from "zod";
@@ -178,9 +178,9 @@ function buildChatUserMessage(
 ) {
   let context = "";
   if (chatContext.length > 0) {
-    context = "\n## 当前公开聊天上下文\n" + chatContext.map(m => `- ${m.senderName}: ${m.content}`).join("\n");
+    context = "\n## Current Public Chat Context\n" + chatContext.map(m => `- ${m.senderName}: ${m.content}`).join("\n");
   }
-  return `## 用户私下问你的问题\n${privateQuestion}${context}\n\n请给出你的建议。`;
+  return `## User's Private Question\n${privateQuestion}${context}\n\nPlease give your advice.`;
 }
 
 function buildAutoContextUserMessage(
@@ -333,7 +333,7 @@ export const pixieRouter = router({
     return PERSONA_LIST;
   }),
 
-  // ─── Unified Suggest API (精灵建议 — auto-detect mode) ──────
+  // ─── Unified Suggest API (auto-detect mode) ──────
   suggest: publicProcedure
     .input(
       z.object({
@@ -431,7 +431,7 @@ export const pixieRouter = router({
       return await callPixieLLM(systemPrompt, userMessage);
     }),
 
-  // ─── Live Chat (独立聊天窗口 — 多轮实时对话) ──────
+  // ─── Live Chat (standalone chat window — multi-turn realtime) ──────
   liveChat: publicProcedure
     .input(
       z.object({
