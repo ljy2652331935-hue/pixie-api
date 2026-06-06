@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import Playground from "./pages/Playground";
 import Docs from "./pages/Docs";
 import LiveChat from "./pages/LiveChat";
+import AppDemo from "./pages/AppDemo";
 
 function Router() {
   return (
@@ -16,6 +17,7 @@ function Router() {
       <Route path={"/playground"} component={Playground} />
       <Route path={"/docs"} component={Docs} />
       <Route path={"/chat"} component={LiveChat} />
+      <Route path={"/demo"} component={AppDemo} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

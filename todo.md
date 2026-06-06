@@ -96,3 +96,18 @@
 - [x] Switch navigation/App.tsx to English
 - [x] Switch pixie-router.ts comments and prompt text to English
 - [x] Switch test data in pixie-router.test.ts to English
+
+## App Demo (Real Chat Simulation)
+- [x] Create /demo route with AppDemo page (keep existing Playground intact)
+- [x] Main chat panel: JiaYi ↔ Alice conversation with 4 entities (JiaYi, Lumi, Alice, Alice's pixie)
+- [x] Message input with "Send to Alice" button
+- [x] ✨ "Ask Lumi" button next to input → calls Suggestion API with current chat context
+- [x] Lumi avatar clickable → opens private chat overlay (Chat API)
+- [x] Presence API auto-triggers on new messages, Lumi speaks up when appropriate
+- [x] Lumi's private whispers shown as subtle bubbles only visible to user
+- [x] Alice simulated responses (simple auto-reply or manual input toggle)
+- [x] Add navigation entry for Demo page
+- [x] Fix: separate whisper state (suggest → main chat, chat → panel only)
+- [x] Fix: hide raw intervention type, show friendly "Lumi jumps in" label
+- [x] Fix: quick question buttons auto-submit via handleLumiChat(q)
+- [x] Fix: wrap private chat input in <form> for reliable submit

@@ -17,6 +17,12 @@ export default function Home() {
           <span className="text-lg font-bold text-foreground">Pixie</span>
         </div>
         <div className="flex items-center gap-4">
+          <Link href="/demo">
+            <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+              <MessageCircle className="w-4 h-4 mr-2" />
+              App Demo
+            </Button>
+          </Link>
           <Link href="/playground">
             <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
               <Play className="w-4 h-4 mr-2" />
