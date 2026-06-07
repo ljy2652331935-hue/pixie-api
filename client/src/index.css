@@ -1,0 +1,228 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ─── Pixie Design Tokens ─────────────────────────────────── */
+@theme inline {
+  /* Typography */
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-display: "Playfair Display", Georgia, serif;
+
+  /* Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  --radius: var(--radius-md);
+
+  /* Colors — Light */
+  --color-background: oklch(0.98 0.004 260);
+  --color-foreground: oklch(0.12 0.02 260);
+  --color-card: oklch(1 0 0);
+  --color-card-foreground: oklch(0.12 0.02 260);
+  --color-popover: oklch(1 0 0);
+  --color-popover-foreground: oklch(0.12 0.02 260);
+  --color-primary: oklch(0.45 0.18 280);
+  --color-primary-foreground: oklch(0.98 0.004 260);
+  --color-secondary: oklch(0.94 0.02 280);
+  --color-secondary-foreground: oklch(0.35 0.12 280);
+  --color-muted: oklch(0.95 0.008 260);
+  --color-muted-foreground: oklch(0.52 0.04 260);
+  --color-accent: oklch(0.92 0.04 300);
+  --color-accent-foreground: oklch(0.35 0.12 280);
+  --color-destructive: oklch(0.55 0.22 25);
+  --color-destructive-foreground: oklch(0.98 0 0);
+  --color-border: oklch(0.88 0.01 260);
+  --color-input: oklch(0.88 0.01 260);
+  --color-ring: oklch(0.45 0.18 280);
+
+  /* Pixie Brand Colors */
+  --color-pixie: oklch(0.55 0.22 290);
+  --color-pixie-soft: oklch(0.92 0.06 290);
+  --color-pixie-glow: oklch(0.65 0.18 300);
+  --color-lumi: oklch(0.58 0.2 295);
+  --color-lumi-light: oklch(0.94 0.06 295);
+  --color-gold: oklch(0.72 0.14 75);
+  --color-gold-soft: oklch(0.95 0.06 75);
+
+  /* Chart colors */
+  --color-chart-1: oklch(0.55 0.22 290);
+  --color-chart-2: oklch(0.65 0.18 200);
+  --color-chart-3: oklch(0.72 0.14 75);
+  --color-chart-4: oklch(0.60 0.20 150);
+  --color-chart-5: oklch(0.58 0.22 25);
+
+  /* Sidebar */
+  --color-sidebar: oklch(0.96 0.008 260);
+  --color-sidebar-foreground: oklch(0.12 0.02 260);
+  --color-sidebar-primary: oklch(0.45 0.18 280);
+  --color-sidebar-primary-foreground: oklch(0.98 0 0);
+  --color-sidebar-accent: oklch(0.92 0.04 300);
+  --color-sidebar-accent-foreground: oklch(0.35 0.12 280);
+  --color-sidebar-border: oklch(0.88 0.01 260);
+  --color-sidebar-ring: oklch(0.45 0.18 280);
+}
+
+/* ─── Dark Theme ─────────────────────────────────────────── */
+.dark {
+  --color-background: oklch(0.10 0.015 265);
+  --color-foreground: oklch(0.94 0.008 260);
+  --color-card: oklch(0.13 0.018 265);
+  --color-card-foreground: oklch(0.94 0.008 260);
+  --color-popover: oklch(0.13 0.018 265);
+  --color-popover-foreground: oklch(0.94 0.008 260);
+  --color-primary: oklch(0.68 0.18 290);
+  --color-primary-foreground: oklch(0.10 0.015 265);
+  --color-secondary: oklch(0.18 0.025 265);
+  --color-secondary-foreground: oklch(0.85 0.01 260);
+  --color-muted: oklch(0.16 0.02 265);
+  --color-muted-foreground: oklch(0.60 0.04 260);
+  --color-accent: oklch(0.20 0.04 285);
+  --color-accent-foreground: oklch(0.85 0.01 260);
+  --color-destructive: oklch(0.60 0.22 25);
+  --color-destructive-foreground: oklch(0.98 0 0);
+  --color-border: oklch(0.22 0.025 265);
+  --color-input: oklch(0.22 0.025 265);
+  --color-ring: oklch(0.68 0.18 290);
+
+  --color-pixie: oklch(0.72 0.22 290);
+  --color-pixie-soft: oklch(0.20 0.06 290);
+  --color-pixie-glow: oklch(0.75 0.20 300);
+  --color-lumi: oklch(0.72 0.20 295);
+  --color-lumi-light: oklch(0.18 0.06 295);
+  --color-gold: oklch(0.78 0.16 75);
+  --color-gold-soft: oklch(0.20 0.06 75);
+
+  --color-sidebar: oklch(0.12 0.018 265);
+  --color-sidebar-foreground: oklch(0.94 0.008 260);
+  --color-sidebar-primary: oklch(0.68 0.18 290);
+  --color-sidebar-primary-foreground: oklch(0.10 0.015 265);
+  --color-sidebar-accent: oklch(0.20 0.04 285);
+  --color-sidebar-accent-foreground: oklch(0.85 0.01 260);
+  --color-sidebar-border: oklch(0.22 0.025 265);
+  --color-sidebar-ring: oklch(0.68 0.18 290);
+}
+
+/* ─── Base Styles ────────────────────────────────────────── */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  h1, h2, h3 {
+    @apply tracking-tight;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/40;
+  }
+}
+
+/* ─── Utilities ──────────────────────────────────────────── */
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  .text-gradient {
+    background: linear-gradient(135deg, oklch(0.68 0.22 290), oklch(0.72 0.18 320));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-gold {
+    background: linear-gradient(135deg, oklch(0.72 0.16 75), oklch(0.80 0.14 55));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .bg-pixie-gradient {
+    background: linear-gradient(135deg, oklch(0.45 0.18 280), oklch(0.55 0.22 310));
+  }
+
+  .bg-glass {
+    backdrop-filter: blur(12px) saturate(1.2);
+    background: oklch(1 0 0 / 0.08);
+    border: 1px solid oklch(1 0 0 / 0.12);
+  }
+
+  .dark .bg-glass {
+    background: oklch(1 0 0 / 0.05);
+    border: 1px solid oklch(1 0 0 / 0.08);
+  }
+
+  .shadow-pixie {
+    box-shadow: 0 0 30px oklch(0.65 0.18 290 / 0.25), 0 4px 20px oklch(0 0 0 / 0.12);
+  }
+
+  .shadow-glow {
+    box-shadow: 0 0 20px oklch(0.68 0.22 290 / 0.4);
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-pulse-soft {
+    animation: pulse-soft 2s ease-in-out infinite;
+  }
+
+  .container {
+    @apply mx-auto px-4 sm:px-6 lg:px-8;
+    max-width: 1280px;
+  }
+
+  .flex {
+    min-width: 0;
+    min-height: 0;
+  }
+}
+
+/* ─── Keyframes ──────────────────────────────────────────── */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes bubble-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-bubble-in {
+  animation: bubble-in 0.25s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
