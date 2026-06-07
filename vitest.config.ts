@@ -15,5 +15,8 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["server/**/*.test.ts", "server/**/*.spec.ts"],
+    // Zhipu AI responses can take 10-30s; set a generous global timeout
+    testTimeout: 60_000,
+    hookTimeout: 30_000,
   },
 });

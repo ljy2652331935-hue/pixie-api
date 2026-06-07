@@ -213,22 +213,18 @@ const normalizeToolChoice = (
 };
 
 const resolveApiUrl = () => {
-  // Priority: OpenAI > ZhipuAI > Forge
-  if (ENV.openaiApiKey && ENV.openaiApiKey.trim().length > 0) {
-    return "https://api.openai.com/v1/chat/completions";
-  }
+  // Zhipu AI is the primary LLM provider.
   if (ENV.zhipuApiKey && ENV.zhipuApiKey.trim().length > 0) {
     return "https://open.bigmodel.cn/api/paas/v4/chat/completions";
   }
+  // Fallback: Manus built-in Forge API
   return ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
     ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
     : "https://forge.manus.im/v1/chat/completions";
 };
 
 const resolveApiKey = () => {
-  if (ENV.openaiApiKey && ENV.openaiApiKey.trim().length > 0) {
-    return ENV.openaiApiKey;
-  }
+  // Zhipu AI is the primary LLM provider.
   if (ENV.zhipuApiKey && ENV.zhipuApiKey.trim().length > 0) {
     return ENV.zhipuApiKey;
   }
@@ -236,8 +232,8 @@ const resolveApiKey = () => {
 };
 
 const assertApiKey = () => {
-  if (!ENV.openaiApiKey && !ENV.zhipuApiKey && !ENV.forgeApiKey) {
-    throw new Error("No LLM API key configured (OPENAI_API_KEY, ZHIPU_API_KEY, or BUILT_IN_FORGE_API_KEY)");
+  if (!ENV.zhipuApiKey && !ENV.forgeApiKey) {
+    throw new Error("No LLM API key configured (ZHIPU_API_KEY or BUILT_IN_FORGE_API_KEY)");
   }
 };
 
@@ -376,12 +372,18 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     max_tokens,
   } = params;
 
+  // When using Zhipu AI, a model must always be specified.
+  // Fall back to glm-4.5 (fast, capable, cost-effective) if caller didn't provide one.
+  const resolvedModel = model ?? (
+    ENV.zhipuApiKey && ENV.zhipuApiKey.trim().length > 0 ? "glm-4.5" : undefined
+  );
+
   const payload: Record<string, unknown> = {
     messages: messages.map(normalizeMessage),
   };
 
-  if (model) {
-    payload.model = model;
+  if (resolvedModel) {
+    payload.model = resolvedModel;
   }
 
   if (tools && tools.length > 0) {
@@ -457,7 +459,7 @@ export async function listLLMModels(): Promise<ModelsResponse> {
     ? "https://open.bigmodel.cn/api/paas/v4/models"
     : ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
       ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/models`
-      : "https://forge.manus.im/v1/models";
+      : "https://forge.manus.im/v1/models"; // fallback
 
   const response = await fetchWithBackoff(url, {
     headers: { authorization: `Bearer ${resolveApiKey()}` },

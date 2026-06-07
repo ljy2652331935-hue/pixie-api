@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { activityPlans, InsertActivityPlan, InsertUser, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +89,36 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// ─── Activity Plans ────────────────────────────────────────────────────────────
+
+export async function insertActivityPlan(plan: InsertActivityPlan): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(activityPlans).values(plan);
+  return (result[0] as { insertId: number }).insertId;
+}
+
+export async function getActivityPlanById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(activityPlans).where(eq(activityPlans.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function listActivityPlans(userId?: number, limit = 20) {
+  const db = await getDb();
+  if (!db) return [];
+  if (userId !== undefined) {
+    return db
+      .select()
+      .from(activityPlans)
+      .where(eq(activityPlans.userId, userId))
+      .orderBy(desc(activityPlans.createdAt))
+      .limit(limit);
+  }
+  return db
+    .select()
+    .from(activityPlans)
+    .orderBy(desc(activityPlans.createdAt))
+    .limit(limit);
+}

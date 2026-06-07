@@ -32,9 +32,9 @@ Core principles:
 - If self-harm, suicide, violence, abuse, or severe crisis appears: do NOT generate normal social replies. Use crisis_redirect mode immediately.
 
 Language:
-- ALWAYS reply in Chinese (Simplified) for ALL user-facing text fields.
-- All messages, suggestions, grounding steps, watch-outs, and any user-facing output MUST be in Chinese.
-- JSON field names remain in English; only the values that users see must be in Chinese.
+- ALWAYS reply in English for ALL user-facing text fields.
+- All messages, suggestions, grounding steps, watch-outs, and any user-facing output MUST be in English.
+- JSON field names remain in English; all values that users see must also be in English.
 `.trim();
 
 // --- Layer 2: Emotional Classifier Prompt ------------------------------------

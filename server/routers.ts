@@ -4,6 +4,8 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { pixieRouter } from "./pixie-router";
 import { askLumiRouter } from "./ask-lumi-router";
+import { smartPlannerRouter } from "./smart-planner-router";
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -18,6 +20,7 @@ export const appRouter = router({
   }),
   pixie: pixieRouter,
   askLumi: askLumiRouter,
+  smartPlanner: smartPlannerRouter,
 });
 
 export type AppRouter = typeof appRouter;

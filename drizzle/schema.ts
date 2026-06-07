@@ -25,4 +25,37 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// TODO: Add your tables here
+/**
+ * Stores generated activity plans from the Smart Planner feature.
+ * Each plan contains two person profiles, a timeslot state, and the AI-generated results.
+ * top3Json and chatTopicsJson are stored as JSON strings (parse on the client).
+ */
+export const activityPlans = mysqlTable("activity_plans", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Optional: link to authenticated user who created the plan (null = anonymous) */
+  userId: int("userId"),
+  /** Person A display name */
+  aName: varchar("aName", { length: 100 }).notNull(),
+  /** Person B display name */
+  bName: varchar("bName", { length: 100 }).notNull(),
+  /** AI-generated shared vibe description */
+  sharedVibe: text("sharedVibe"),
+  /** Vibe category: emotional / action / mixed */
+  vibeCategory: mysqlEnum("vibeCategory", ["emotional", "action", "mixed"]),
+  /** Search query used to find events */
+  searchQuery: text("searchQuery"),
+  /** JSON string: EventRec[] — top 3 recommended venues/events with match scores */
+  top3Json: text("top3Json"),
+  /** JSON string: ChatTopicItem[] — 5 conversation starter topics */
+  chatTopicsJson: text("chatTopicsJson"),
+  /** JSON string: PersonProfile for Person A */
+  personAJson: text("personAJson").notNull(),
+  /** JSON string: PersonProfile for Person B */
+  personBJson: text("personBJson").notNull(),
+  /** JSON string: TimeslotState */
+  timeslotJson: text("timeslotJson"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ActivityPlan = typeof activityPlans.$inferSelect;
+export type InsertActivityPlan = typeof activityPlans.$inferInsert;

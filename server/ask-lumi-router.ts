@@ -154,7 +154,7 @@ async function classifyLumi(
 
   try {
     const result = await invokeLLM({
-      model: "gpt-4o-mini",
+      model: "glm-4.5",
       messages: [
         { role: "system", content: LUMI_CLASSIFIER_PROMPT },
         { role: "user", content: userInput },
@@ -235,7 +235,7 @@ async function generateSocialSoothingResponse(
 
   try {
     const result = await invokeLLM({
-      model: "gpt-4o-mini",
+      model: "glm-4.5",
       messages: [
         { role: "system", content: LUMI_SOCIAL_SOOTHING_PROMPT },
         { role: "user", content: userInput },
@@ -305,7 +305,7 @@ async function generateGroundingResponse(
 
   try {
     const result = await invokeLLM({
-      model: "gpt-4o-mini",
+      model: "glm-4.5",
       messages: [
         { role: "system", content: LUMI_GROUNDING_PROMPT },
         { role: "user", content: userInput },
@@ -344,7 +344,7 @@ async function generateCrisisResponse(userMessage: string): Promise<CrisisRedire
 
   try {
     const result = await invokeLLM({
-      model: "gpt-4o-mini",
+      model: "glm-4.5",
       messages: [
         { role: "system", content: LUMI_CRISIS_REDIRECT_PROMPT },
         { role: "user", content: userInput },

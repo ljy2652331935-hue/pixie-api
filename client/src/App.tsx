@@ -9,6 +9,8 @@ import Playground from "./pages/Playground";
 import Docs from "./pages/Docs";
 import LiveChat from "./pages/LiveChat";
 import AskLumi from "./pages/AskLumi";
+import LumiChat from "./pages/LumiChat";
+import SmartPlanner from "./pages/SmartPlanner";
 
 function Router() {
   return (
@@ -18,6 +20,8 @@ function Router() {
       <Route path={"/docs"} component={Docs} />
       <Route path={"/chat"} component={LiveChat} />
       <Route path={"/ask-lumi"} component={AskLumi} />
+      <Route path={"/lumi-chat"} component={LumiChat} />
+      <Route path={"/smart-planner"} component={SmartPlanner} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

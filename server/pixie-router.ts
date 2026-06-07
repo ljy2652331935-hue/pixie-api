@@ -86,7 +86,7 @@ interface BubblesResponse {
 
 async function callPixieLLM(systemPrompt: string, userMessage: string): Promise<BubblesResponse> {
   const result = await invokeLLM({
-    model: "gpt-4o-mini",
+    model: "glm-4.5",
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userMessage },
@@ -240,7 +240,7 @@ interface PresenceResponse {
 
 async function callPresenceLLM(systemPrompt: string, userMessage: string): Promise<PresenceResponse> {
   const result = await invokeLLM({
-    model: "gpt-4o-mini",
+    model: "glm-4.5",
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userMessage },
@@ -356,7 +356,7 @@ export const pixieRouter = router({
       const userMessage = buildSuggestUserMessage(input);
 
       const result = await invokeLLM({
-        model: "gpt-4o-mini",
+        model: "glm-4.5",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userMessage },
@@ -461,7 +461,7 @@ export const pixieRouter = router({
       ];
 
       const result = await invokeLLM({
-        model: "gpt-4o-mini",
+        model: "glm-4.5",
         messages: llmMessages,
         max_tokens: 1024,
       });

@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
-import { Sparkles, MessageCircle, Zap, BookOpen, ArrowRight, Star, Shield, Cpu, Users } from "lucide-react";
+import { Sparkles, MessageCircle, Zap, BookOpen, ArrowRight, Star, Shield, Cpu, Users, Heart, MapPin } from "lucide-react";
 
 const PERSONAS = [
   { id: "lumi", name: "Lumi", label: "Warm Bestie", emoji: "✨", color: "from-violet-500 to-purple-600", desc: "Lucy's personal pixie — short, sharp, protective, and always keeping it real." },
@@ -37,6 +37,20 @@ const FEATURES = [
     badge: "LIVE-CHAT",
     href: "/live-chat",
   },
+  {
+    icon: <Heart className="w-5 h-5" />,
+    title: "Lumi Chat",
+    description: "Your private pixie companion channel. Vent, spiral, get a reality check — Lumi sits with you, then gently pushes you back to the real world.",
+    badge: "LUMI-CHAT",
+    href: "/lumi-chat",
+  },
+  {
+    icon: <MapPin className="w-5 h-5" />,
+    title: "Smart Planner",
+    description: "Match two people's personalities and today's vibe to find the perfect London activity — with AI-scored venues, match breakdowns, and conversation starters.",
+    badge: "ACTIVITY-MATCH",
+    href: "/smart-planner",
+  },
 ];
 
 const MODES = [
@@ -65,6 +79,8 @@ export default function Home() {
             <Link href="/docs" className="hover:text-foreground transition-colors">Docs</Link>
             <Link href="/chat" className="hover:text-foreground transition-colors">Live Chat</Link>
             <Link href="/ask-lumi" className="hover:text-foreground transition-colors font-medium text-purple-400">Ask Lumi</Link>
+            <Link href="/lumi-chat" className="hover:text-foreground transition-colors font-medium text-violet-300">Lumi Chat</Link>
+            <Link href="/smart-planner" className="hover:text-foreground transition-colors font-medium text-amber-400">Smart Planner</Link>
           </div>
           <Link href="/playground">
             <Button size="sm" className="bg-pixie-gradient text-white border-0 shadow-pixie hover:opacity-90 transition-opacity">
@@ -118,7 +134,7 @@ export default function Home() {
             {[
               { value: "2", label: "Pixie Personas" },
               { value: "6", label: "Suggestion Modes" },
-              { value: "4", label: "Core APIs" },
+              { value: "6", label: "Core Features" },
             ].map(s => (
               <div key={s.label} className="text-center">
                 <div className="text-3xl font-display font-semibold text-gradient">{s.value}</div>
@@ -133,7 +149,7 @@ export default function Home() {
       <section className="py-20 border-t border-border/50">
         <div className="container">
           <div className="text-center mb-14">
-            <h2 className="font-display text-3xl sm:text-4xl font-semibold mb-4">Four Core APIs</h2>
+            <h2 className="font-display text-3xl sm:text-4xl font-semibold mb-4">Six Core Features</h2>
             <p className="text-muted-foreground text-lg max-w-xl mx-auto">
               Each endpoint is a different dimension of social intelligence — all powered by the same Lumi persona system.
             </p>

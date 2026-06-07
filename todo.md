@@ -108,3 +108,37 @@
 - [x] 清理 Lumi 人格中残留的旧毒舌/sassy/roast 相关内容
 - [x] 将所有前端页面中文内容转换为英文（Home/Playground/Docs/LiveChat/AppDemo 等）
 - [x] 整理项目为可复制的 GitHub 项目（README、.env.example、部署指南）
+
+## LumiPixieChatBox — Lumi Pet Chat Channel (v6)
+- [x] Upgrade LIVE_CHAT_PROMPT with full ZIP content (15 scenarios, 3 response modes, memory system, safety mode) — English
+- [x] Fix ask-lumi-prompts.ts language: change Chinese output requirement to English
+- [x] Create new server/lumi-chat-router.ts with lumiChat endpoint (memory-aware schema)
+- [x] Create new client/src/pages/LumiChat.tsx — dedicated Lumi pet chat channel page
+- [x] LumiChat: 3 response mode display (Soft Hug / Cute Roast / Gentle Action)
+- [x] LumiChat: Memory consent UX (Remember / Not this time / Never remember this)
+- [x] LumiChat: Quick replies (0-3 buttons per response)
+- [x] LumiChat: Scene type badge display
+- [x] LumiChat: Safety mode card (serious tone, emergency resources)
+- [x] LumiChat: Risk level indicator
+- [x] Register /lumi-chat route in App.tsx
+- [x] Add Lumi Chat nav link to header
+- [x] Update Home page to include Lumi Chat feature card
+- [x] Write vitest tests for lumiChat endpoint
+- [x] TypeScript zero errors, all tests passing
+
+## Smart Planner — Activity Matching API
+
+- [x] Add activity_plans table to drizzle/schema.ts
+- [x] Generate migration SQL and apply via webdev_execute_sql
+- [x] Add db helpers for activity_plans in server/db.ts
+- [x] Build scoring algorithm in server/smart-planner-scoring.ts
+- [x] Build server/smart-planner-router.ts: generate, getById, list endpoints
+- [x] Register smartPlanner router in server/routers.ts
+- [x] Build SmartPlanner frontend page: two-person profile form + timeslot
+- [x] SmartPlanner: Result view — top 3 event cards with match score ring
+- [x] SmartPlanner: Chat topics section
+- [x] SmartPlanner: History view
+- [x] Register /smart-planner route in App.tsx
+- [x] Add Smart Planner nav link to Home.tsx
+- [x] Write vitest tests for smart-planner-router
+- [x] TypeScript zero errors

@@ -4,14 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { ArrowLeft, Sparkles, ChevronRight, Copy, Check } from "lucide-react";
 
-// ─── Types ─────────────────────────────────────────────────
+// - Types -
 
 interface Section {
   id: string;
   label: string;
 }
 
-// ─── Constants ─────────────────────────────────────────────
+// - Constants -
 
 const SECTIONS: Section[] = [
   { id: "overview", label: "Overview" },
@@ -37,7 +37,7 @@ const MODES = [
   { id: "offline_profile", label: "Offline Profile", desc: "Transparent info card. Identifies as Pixie, not the user. Never impersonates." },
 ];
 
-// ─── Code Block ─────────────────────────────────────────────
+// - Code Block -
 
 function CodeBlock({ code, lang = "typescript" }: { code: string; lang?: string }) {
   const [copied, setCopied2] = useState(false);
@@ -62,7 +62,7 @@ function CodeBlock({ code, lang = "typescript" }: { code: string; lang?: string 
   );
 }
 
-// ─── Section Header ─────────────────────────────────────────
+// - Section Header -
 
 function SectionHeader({ id, badge, title, desc }: { id: string; badge: string; title: string; desc: string }) {
   return (
@@ -74,7 +74,7 @@ function SectionHeader({ id, badge, title, desc }: { id: string; badge: string; 
   );
 }
 
-// ─── Field Table ─────────────────────────────────────────────
+// - Field Table -
 
 function FieldTable({ fields }: { fields: { name: string; type: string; required?: boolean; desc: string }[] }) {
   return (
@@ -109,7 +109,7 @@ function FieldTable({ fields }: { fields: { name: string; type: string; required
   );
 }
 
-// ─── Main Page ──────────────────────────────────────────────
+// - Main Page -
 
 export default function Docs() {
   const [activeSection, setActiveSection] = useState("overview");
@@ -172,7 +172,7 @@ export default function Docs() {
         <main className="flex-1 lg:ml-56 min-w-0">
           <div className="max-w-3xl mx-auto px-6 py-12 space-y-16">
 
-            {/* ─── Overview ─────────────────────────────── */}
+            {/* - Overview - */}
             <section>
               <SectionHeader
                 id="overview"
@@ -199,7 +199,7 @@ trpc.pixie.autoContext.useMutation()
 trpc.pixie.personas.useQuery()   // Get persona list`} />
             </section>
 
-            {/* ─── Personas ────────────────────────────── */}
+            {/* - Personas - */}
             <section>
               <SectionHeader
                 id="personas"
@@ -227,7 +227,7 @@ trpc.pixie.personas.useQuery()   // Get persona list`} />
   | "foxxz";    // Foxxz 🦊 — Pat's gentleman fox strategist`} />
             </section>
 
-            {/* ─── Modes ────────────────────────────────── */}
+            {/* - Modes - */}
             <section>
               <SectionHeader
                 id="modes"
@@ -255,7 +255,7 @@ trpc.pixie.personas.useQuery()   // Get persona list`} />
   | "offline_profile";`} />
             </section>
 
-            {/* ─── pixie.suggest ────────────────────────── */}
+            {/* - pixie.suggest - */}
             <section>
               <SectionHeader
                 id="api-suggest"
@@ -320,7 +320,7 @@ suggest.mutate({
               </div>
             </section>
 
-            {/* ─── pixie.chat ───────────────────────────── */}
+            {/* - pixie.chat - */}
             <section>
               <SectionHeader
                 id="api-chat"
@@ -376,7 +376,7 @@ chat.mutate({
               </div>
             </section>
 
-            {/* ─── pixie.autoContext ────────────────────── */}
+            {/* - pixie.autoContext - */}
             <section>
               <SectionHeader
                 id="api-autocontext"
@@ -443,7 +443,7 @@ autoContext.mutate({
               </div>
             </section>
 
-            {/* ─── Prompt Architecture ──────────────────── */}
+            {/* - Prompt Architecture - */}
             <section>
               <SectionHeader
                 id="prompts"
